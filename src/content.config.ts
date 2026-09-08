@@ -49,7 +49,7 @@ const settings = defineCollection({
     siteDescription: z.string(),
     goalYear: z.number().int(),
     yearlyGoal: z.number().int().positive(),
-    social: z.object({
+        social: z.object({
       website: z.string().optional().default(""),
       github: z.string().optional().default(""),
       linkedin: z.string().optional().default(""),
