@@ -1,0 +1,142 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getArchiveItems, ARCHIVE_KIND_LABELS, type ArchiveKind } from "../lib/archive";
+import { withBase } from "../lib/url";
+import { formatDateTR } from "../lib/reading";
+
+const items = await getArchiveItems();
+
+const KIND_COLOR_VAR: Record<ArchiveKind, string> = {
+  book: "--color-teal",
+  review: "--color-leather",
+  quote: "--color-gold",
+  note: "--color-ink-soft",
+};
+
+const filters: { key: "all" | ArchiveKind; label: string }[] = [
+  { key: "all", label: "Tümü" },
+  { key: "book", label: "Kitaplar" },
+  { key: "review", label: "İncelemeler" },
+  { key: "quote", label: "Alıntılar" },
+  { key: "note", label: "Notlar" },
+];
+---
+
+<BaseLayout
+  title="Arşiv"
+  description="Kitaplar, incelemeler, alıntılar ve notların tarih sırasına göre aktığı merkezi arşiv."
+>
+  <div class="mx-auto max-w-3xl px-5 py-10">
+    <h1 class="font-serif text-3xl text-ink">Arşiv</h1>
+    <p class="mt-2 text-ink-soft">Okurken'deki her şey, tek bir zaman akışında.</p>
+
+    <div class="mt-6 flex flex-wrap gap-2" id="archive-filters">
+      {
+        filters.map((f) => (
+          <button type="button" data-kind={f.key} class:list={["archive-filter-chip", f.key === "all" && "is-active"]}>
+            {f.label}
+          </button>
+        ))
+      }
+    </div>
+
+    <ol class="mt-8 flex flex-col" id="archive-list">
+      {
+        items.map((item, index) => {
+          const isLast = index === items.length - 1;
+          const bookHref = withBase(`/kitaplar/${item.book.id}/`);
+          return (
+            <li data-kind={item.kind} class="flex gap-4">
+              <div class="flex flex-col items-center">
+                <span
+                  class="mt-1.5 size-2.5 shrink-0 rounded-full"
+                  style={`background-color: var(${KIND_COLOR_VAR[item.kind]})`}
+                  aria-hidden="true"
+                />
+                {!isLast && <span class="mt-1 w-px flex-1 bg-rule" aria-hidden="true" />}
+              </div>
+
+              <div class="flex-1 pb-8">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-soft">
+                  <span class="rounded border border-rule px-1.5 py-0.5">{ARCHIVE_KIND_LABELS[item.kind]}</span>
+                  <time>{formatDateTR(item.date)}</time>
+                </div>
+
+                {item.kind === "book" && (
+                  <a href={bookHref} class="group mt-2 block">
+                    <p class="font-serif text-lg text-ink group-hover:text-leather">{item.book.data.title}</p>
+                    <p class="text-sm text-ink-soft">{item.book.data.author}</p>
+                    <p class="mt-1 text-sm text-ink-soft">Okumaya başlandı</p>
+                  </a>
+                )}
+
+                {item.kind === "review" && (
+                  <a href={withBase(`/kitaplar/${item.book.id}/#inceleme`)} class="group mt-2 block">
+                    <div class="flex flex-wrap items-baseline justify-between gap-x-3">
+                      <p class="font-serif text-lg text-ink group-hover:text-leather">{item.book.data.title}</p>
+                      <span class="text-xs text-ink-soft">{item.minutes} dk okuma süresi</span>
+                    </div>
+                    <p class="text-sm text-ink-soft">{item.book.data.author}</p>
+                    <p class="mt-2 max-w-[62ch] text-sm text-ink-soft">{item.excerpt}</p>
+                  </a>
+                )}
+
+                {item.kind === "quote" && (
+                  <a href={withBase(`/kitaplar/${item.book.id}/#alinti-${item.index}`)} class="group mt-2 block">
+                    <blockquote class="border-l-2 border-gold pl-4 font-serif italic leading-relaxed text-ink">
+                      “{item.text}”
+                    </blockquote>
+                    <p class="mt-1 pl-4 text-sm text-ink-soft group-hover:text-leather">
+                      {item.book.data.title}
+                      {item.page ? `, sayfa ${item.page}` : ""}
+                    </p>
+                  </a>
+                )}
+
+                {item.kind === "note" && (
+                  <a href={withBase(`/kitaplar/${item.book.id}/#not-${item.index}`)} class="group mt-2 block">
+                    <p class="max-w-[62ch] text-ink">{item.text}</p>
+                    <p class="mt-1 text-sm text-ink-soft group-hover:text-leather">{item.book.data.title}</p>
+                  </a>
+                )}
+              </div>
+            </li>
+          );
+        })
+      }
+    </ol>
+
+    {items.length === 0 && <p class="mt-8 text-ink-soft">Henüz arşivde içerik yok.</p>}
+  </div>
+</BaseLayout>
+
+<style>
+  .archive-filter-chip {
+    border-radius: 999px;
+    border: 1px solid var(--color-rule);
+    padding: 0.35rem 0.9rem;
+    font-size: 0.875rem;
+    color: var(--color-ink-soft);
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .archive-filter-chip.is-active {
+    border-color: var(--color-leather);
+    color: var(--color-leather);
+  }
+</style>
+
+<script>
+  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>("#archive-filters [data-kind]"));
+  const items = Array.from(document.querySelectorAll<HTMLLIElement>("#archive-list > [data-kind]"));
+
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const kind = button.dataset.kind;
+      buttons.forEach((b) => b.classList.toggle("is-active", b === button));
+      items.forEach((item) => {
+        const show = kind === "all" || item.dataset.kind === kind;
+        item.style.display = show ? "" : "none";
+      });
+    });
+  });
+</script>

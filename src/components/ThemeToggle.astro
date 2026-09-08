@@ -1,0 +1,47 @@
+---
+// Aydınlık / koyu mod anahtarı. Gerçek uygulama BaseHead.astro'daki
+// FOUC-engelleyici betikte yapılır; bu bileşen sadece kullanıcı etkileşimini
+// yönetir ve tercihi localStorage'a yazar.
+---
+
+<button
+  id="theme-toggle"
+  type="button"
+  aria-label="Aydınlık / koyu mod değiştir"
+  class="grid size-9 shrink-0 place-items-center rounded-full border border-rule text-ink-soft transition-colors hover:border-leather hover:text-leather"
+>
+  <svg
+    id="icon-sun"
+    class="hidden size-4 dark:block"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.8"
+    stroke-linecap="round"
+  >
+    <circle cx="12" cy="12" r="4.2"></circle>
+    <path
+      d="M12 2.5v2.4M12 19.1v2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"
+    ></path>
+  </svg>
+  <svg id="icon-moon" class="size-4 dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.6 6.6 0 0 0 10.5 10.5Z"></path>
+  </svg>
+  <span class="sr-only">Temayı değiştir</span>
+</button>
+
+<script>
+  const STORAGE_KEY = "okurken-theme";
+  const button = document.getElementById("theme-toggle");
+
+  button?.addEventListener("click", () => {
+    const root = document.documentElement;
+    const nowDark = !root.classList.contains("dark");
+    root.classList.toggle("dark", nowDark);
+    try {
+      localStorage.setItem(STORAGE_KEY, nowDark ? "dark" : "light");
+    } catch (_) {
+      /* localStorage kullanılamıyor olabilir, sorun değil */
+    }
+  });
+</script>

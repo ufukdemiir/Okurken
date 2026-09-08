@@ -1,0 +1,27 @@
+---
+import { getThisMonthFinished } from "../lib/books";
+import { formatMonthYearTR } from "../lib/reading";
+import BookCard from "./BookCard.astro";
+
+const now = new Date();
+const books = await getThisMonthFinished(now);
+const label = formatMonthYearTR(now);
+---
+
+{
+  books.length > 0 && (
+    <section aria-labelledby="wrapup-heading">
+      <div class="flex items-baseline justify-between gap-3">
+        <h2 id="wrapup-heading" class="font-serif text-lg text-ink">
+          {label} özeti
+        </h2>
+        <span class="text-sm text-ink-soft">{books.length} kitap bitirildi</span>
+      </div>
+      <div class="mt-4 grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
+        {books.map((book) => (
+          <BookCard book={book} />
+        ))}
+      </div>
+    </section>
+  )
+}

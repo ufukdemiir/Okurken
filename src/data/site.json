@@ -1,0 +1,18 @@
+{
+  "main": {
+    "readerName": "Ufuk Demir",
+    "avatarInitials": "UD",
+    "tagline": "Okuduklarımın günlüğünü tutuyorum.",
+    "bio": "Meraklı bir okur olarak bitirdiğim her kitabı, aldığım notları ve altını çizdiğim satırları burada saklıyorum. Okurken, kendi kişisel kütüphanemin dijital hâli.",
+    "siteDescription": "Ufuk Demir'in kişisel okuma günlüğü: okuduğu kitaplar, incelemeleri, notları ve alıntıları.",
+    "goalYear": 2026,
+    "yearlyGoal": 40,
+    "social": {
+      "website": "",
+      "twitter": "",
+      "instagram": "",
+      "goodreads": "",
+      "email": "merhaba@example.com"
+    }
+  }
+}

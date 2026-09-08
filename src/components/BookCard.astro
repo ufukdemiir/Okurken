@@ -1,0 +1,38 @@
+---
+import { getSpineColor } from "../lib/spine";
+import { withBase } from "../lib/url";
+import StatusBadge from "./StatusBadge.astro";
+import type { BookEntry } from "../lib/books";
+
+interface Props {
+  book: BookEntry;
+}
+
+const { book } = Astro.props;
+const { title, author, status, rating } = book.data;
+const spine = getSpineColor(`${title}__${author}`);
+const href = withBase(`/kitaplar/${book.id}/`);
+---
+
+<a href={href} class="group flex flex-col gap-3">
+  <div
+    class="spine-texture relative flex aspect-[2/3] flex-col justify-between overflow-hidden rounded-md p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22),inset_0_-1px_0_rgba(0,0,0,0.22)] transition-transform duration-200 group-hover:-translate-y-1"
+    style={`background-color:${spine.bg}; color:${spine.ink}`}
+  >
+    <p class="font-serif text-lg leading-snug line-clamp-5">{title}</p>
+    <div>
+      <span class="mb-2 block h-px w-8 bg-current opacity-40"></span>
+      <p class="text-sm opacity-85 line-clamp-2">{author}</p>
+    </div>
+  </div>
+  <div class="flex flex-col gap-1">
+    <h3 class="font-serif text-base text-ink transition-colors group-hover:text-leather line-clamp-2">
+      {title}
+    </h3>
+    <p class="text-sm text-ink-soft line-clamp-1">{author}</p>
+    <div class="flex items-center justify-between">
+      <StatusBadge status={status} />
+      {rating && <span class="text-sm text-ink-soft">{rating}/10</span>}
+    </div>
+  </div>
+</a>

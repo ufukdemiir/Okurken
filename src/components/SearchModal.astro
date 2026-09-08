@@ -1,0 +1,197 @@
+---
+// Global arama penceresi. Header.astro'daki #search-trigger butonu ve
+// Ctrl+K / Cmd+K kısayolu bunu açar. Veri src/pages/search-index.json.ts
+// tarafından derleme anında üretilen statik JSON dosyasından gelir ve
+// istemci tarafında Fuse.js ile bulanık (fuzzy) aranır.
+---
+
+<dialog
+  id="search-modal"
+  class="m-auto w-[min(560px,92vw)] rounded-xl border border-rule bg-surface p-0 text-ink shadow-2xl backdrop:bg-transparent"
+>
+  <div class="flex items-center gap-3 border-b border-rule px-4 py-3">
+    <svg class="size-4 shrink-0 text-ink-soft" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <circle cx="11" cy="11" r="7"></circle>
+      <path d="m20 20-3.2-3.2"></path>
+    </svg>
+    <input
+      id="search-input"
+      type="text"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="Kitap, yazar, alıntı, inceleme veya not ara…"
+      class="w-full bg-transparent text-base text-ink placeholder:text-ink-soft focus:outline-none"
+    />
+    <kbd class="hidden shrink-0 rounded border border-rule px-1.5 py-0.5 text-xs text-ink-soft sm:inline">Esc</kbd>
+  </div>
+
+  <div id="search-filters" class="flex flex-wrap gap-1.5 border-b border-rule px-4 py-2.5">
+    <button type="button" data-kind="all" class="search-filter-chip is-active">Tümü</button>
+    <button type="button" data-kind="book" class="search-filter-chip">Kitaplar</button>
+    <button type="button" data-kind="author" class="search-filter-chip">Yazarlar</button>
+    <button type="button" data-kind="quote" class="search-filter-chip">Alıntılar</button>
+    <button type="button" data-kind="review" class="search-filter-chip">İncelemeler</button>
+    <button type="button" data-kind="note" class="search-filter-chip">Notlar</button>
+  </div>
+
+  <div id="search-results" class="max-h-[55vh] overflow-y-auto p-2">
+    <p class="px-3 py-8 text-center text-sm text-ink-soft">
+      Aramaya başlamak için yazmaya başlayın.
+    </p>
+  </div>
+</dialog>
+
+<style>
+  .search-filter-chip {
+    border-radius: 999px;
+    border: 1px solid var(--color-rule);
+    padding: 0.25rem 0.7rem;
+    font-size: 0.8125rem;
+    color: var(--color-ink-soft);
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .search-filter-chip.is-active {
+    border-color: var(--color-leather);
+    color: var(--color-leather);
+  }
+  #search-modal::backdrop {
+    background: rgba(20, 16, 10, 0.55);
+    backdrop-filter: blur(3px);
+  }
+</style>
+
+<script>
+  import Fuse from "fuse.js";
+
+  interface SearchIndexItem {
+    kind: "book" | "author" | "quote" | "review" | "note";
+    title: string;
+    subtitle: string;
+    text: string;
+    url: string;
+  }
+
+  const KIND_LABELS: Record<string, string> = {
+    book: "Kitap",
+    author: "Yazar",
+    quote: "Alıntı",
+    review: "İnceleme",
+    note: "Not",
+  };
+
+  const dialog = document.getElementById("search-modal") as HTMLDialogElement | null;
+  const input = document.getElementById("search-input") as HTMLInputElement | null;
+  const resultsEl = document.getElementById("search-results");
+  const trigger = document.getElementById("search-trigger");
+  const filterButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-kind]"));
+
+  let fuse: InstanceType<typeof Fuse<SearchIndexItem>> | null = null;
+  let allItems: SearchIndexItem[] = [];
+  let activeKind = "all";
+  let lastQuery = "";
+
+  const BASE = import.meta.env.BASE_URL.endsWith("/")
+    ? import.meta.env.BASE_URL.slice(0, -1)
+    : import.meta.env.BASE_URL;
+
+  async function ensureIndex() {
+    if (fuse) return;
+    try {
+      const res = await fetch(`${BASE}/search-index.json`);
+      allItems = await res.json();
+      fuse = new Fuse(allItems, {
+        keys: [
+          { name: "title", weight: 0.45 },
+          { name: "subtitle", weight: 0.25 },
+          { name: "text", weight: 0.3 },
+        ],
+        threshold: 0.34,
+        ignoreLocation: true,
+        minMatchCharLength: 2,
+      });
+    } catch (_) {
+      if (resultsEl) {
+        resultsEl.innerHTML =
+          '<p class="px-3 py-8 text-center text-sm text-ink-soft">Arama dizini yüklenemedi.</p>';
+      }
+    }
+  }
+
+  function escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function renderResults(items: SearchIndexItem[]) {
+    if (!resultsEl) return;
+    const filtered = activeKind === "all" ? items : items.filter((i) => i.kind === activeKind);
+
+    if (!lastQuery) {
+      resultsEl.innerHTML =
+        '<p class="px-3 py-8 text-center text-sm text-ink-soft">Aramaya başlamak için yazmaya başlayın.</p>';
+      return;
+    }
+    if (filtered.length === 0) {
+      resultsEl.innerHTML =
+        '<p class="px-3 py-8 text-center text-sm text-ink-soft">Sonuç bulunamadı.</p>';
+      return;
+    }
+
+    resultsEl.innerHTML = filtered
+      .slice(0, 40)
+      .map((item) => {
+        const snippet = item.text ? escapeHtml(item.text).slice(0, 110) : "";
+        return `<a href="${BASE}${item.url}" class="search-result-link flex flex-col gap-0.5 rounded-lg px-3 py-2.5 hover:bg-paper">
+          <span class="flex items-center gap-2 text-sm text-ink">
+            <span class="rounded border border-rule px-1.5 py-0.5 text-[11px] text-ink-soft">${KIND_LABELS[item.kind]}</span>
+            <span class="font-medium">${escapeHtml(item.title)}</span>
+          </span>
+          ${item.subtitle ? `<span class="pl-1 text-xs text-ink-soft">${escapeHtml(item.subtitle)}</span>` : ""}
+          ${snippet ? `<span class="pl-1 text-xs text-ink-soft line-clamp-1">${snippet}${item.text.length > 110 ? "…" : ""}</span>` : ""}
+        </a>`;
+      })
+      .join("");
+  }
+
+  function runSearch() {
+    lastQuery = input?.value.trim() ?? "";
+    if (!fuse || !lastQuery) {
+      renderResults([]);
+      return;
+    }
+    const results = fuse.search(lastQuery, { limit: 60 }).map((r) => r.item);
+    renderResults(results);
+  }
+
+  async function openModal() {
+    dialog?.showModal();
+    await ensureIndex();
+    input?.focus();
+    runSearch();
+  }
+
+  trigger?.addEventListener("click", openModal);
+
+  document.addEventListener("keydown", (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      openModal();
+    }
+  });
+
+  dialog?.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+
+  input?.addEventListener("input", runSearch);
+
+  filterButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      activeKind = button.dataset.kind ?? "all";
+      filterButtons.forEach((b) => b.classList.toggle("is-active", b === button));
+      runSearch();
+    });
+  });
+</script>
