@@ -9,9 +9,9 @@ const year = new Date().getFullYear();
 
 const links = [
   { href: social?.website, label: "Web sitesi" },
-  { href: social?.twitter && `https://twitter.com/${social.twitter}`, label: "X (Twitter)" },
-  { href: social?.instagram && `https://instagram.com/${social.instagram}`, label: "Instagram" },
-  { href: social?.goodreads, label: "Goodreads" },
+  { href: social?.github, label: "GitHub" },
+  { href: social?.linkedin, label: "LinkedIn" },
+  { href: social?.pinterest, label: "Pinterest" },
   { href: social?.email && `mailto:${social.email}`, label: "E-posta" },
 ].filter((l): l is { href: string; label: string } => Boolean(l.href));
 ---
