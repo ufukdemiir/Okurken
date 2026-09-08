@@ -1,0 +1,88 @@
+---
+import { withBase } from "../lib/url";
+import ThemeToggle from "./ThemeToggle.astro";
+
+const navItems = [
+  { href: "/arsiv/", label: "Arşiv" },
+  { href: "/kitaplar/", label: "Kitaplar" },
+  { href: "/yazarlar/", label: "Yazarlar" },
+  { href: "/alintilar/", label: "Alıntılar" },
+  { href: "/incelemeler/", label: "İncelemeler" },
+  { href: "/notlar/", label: "Notlar" },
+  { href: "/istatistikler/", label: "İstatistikler" },
+];
+
+const currentPath = Astro.url.pathname;
+function isActive(href: string) {
+  const full = withBase(href);
+  return currentPath === full || currentPath === full.replace(/\/$/, "");
+}
+---
+
+<header class="sticky top-0 z-30 border-b border-rule bg-paper/90 backdrop-blur">
+  <div class="mx-auto flex max-w-5xl items-center gap-4 px-5 py-4">
+    <a href={withBase("/")} class="shrink-0 font-serif text-xl text-ink">
+      Okurken
+    </a>
+
+    <nav class="hidden flex-1 items-center gap-5 md:flex" aria-label="Ana gezinme">
+      {
+        navItems.map((item) => (
+          <a
+            href={withBase(item.href)}
+            class:list={[
+              "text-sm transition-colors hover:text-leather",
+              isActive(item.href) ? "text-leather" : "text-ink-soft",
+            ]}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="ml-auto flex items-center gap-2 md:ml-0">
+      <button
+        id="search-trigger"
+        type="button"
+        aria-label="Ara"
+        class="flex size-9 items-center justify-center gap-1.5 rounded-full border border-rule text-ink-soft transition-colors hover:border-leather hover:text-leather md:w-auto md:px-3"
+      >
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.2-3.2"></path>
+        </svg>
+        <span class="hidden text-sm md:inline">Ara</span>
+        <kbd class="hidden rounded border border-rule px-1.5 py-0.5 text-xs text-ink-soft md:inline">⌘K</kbd>
+      </button>
+
+      <ThemeToggle />
+
+      <details class="relative md:hidden">
+        <summary
+          class="flex size-9 list-none items-center justify-center rounded-full border border-rule text-ink-soft [&::-webkit-details-marker]:hidden"
+          aria-label="Menü"
+        >
+          <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M4 7h16M4 12h16M4 17h16"></path>
+          </svg>
+        </summary>
+        <nav
+          class="absolute right-0 top-11 flex w-52 flex-col gap-1 rounded-lg border border-rule bg-surface p-2 shadow-lg"
+          aria-label="Mobil gezinme"
+        >
+          {
+            navItems.map((item) => (
+              <a
+                href={withBase(item.href)}
+                class="rounded-md px-3 py-2 text-sm text-ink-soft hover:bg-paper hover:text-leather"
+              >
+                {item.label}
+              </a>
+            ))
+          }
+        </nav>
+      </details>
+    </div>
+  </div>
+</header>

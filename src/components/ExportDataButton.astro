@@ -1,0 +1,53 @@
+---
+import { getPublishedBooks } from "../lib/books";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className = "" } = Astro.props;
+
+const books = await getPublishedBooks();
+const exportData = books.map((b) => ({
+  title: b.data.title,
+  author: b.data.author,
+  publisher: b.data.publisher || null,
+  pageCount: b.data.pageCount ?? null,
+  startDate: b.data.startDate ? b.data.startDate.toISOString().slice(0, 10) : null,
+  endDate: b.data.endDate ? b.data.endDate.toISOString().slice(0, 10) : null,
+  status: b.data.status,
+  rating: b.data.rating ?? null,
+  genres: b.data.genres,
+  notes: b.data.notes,
+  quotes: b.data.quotes,
+}));
+---
+
+<button
+  id="export-btn"
+  type="button"
+  data-export={JSON.stringify(exportData)}
+  class={`inline-flex items-center gap-2 rounded-full border border-rule px-4 py-2 text-sm text-ink-soft transition-colors hover:border-leather hover:text-leather ${className}`}
+>
+  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3v12m0 0-4-4m4 4 4-4"></path>
+    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path>
+  </svg>
+  Arşivi JSON indir
+</button>
+
+<script>
+  const button = document.getElementById("export-btn");
+  button?.addEventListener("click", () => {
+    const data = button.getAttribute("data-export") ?? "[]";
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "okurken-arsiv.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  });
+</script>

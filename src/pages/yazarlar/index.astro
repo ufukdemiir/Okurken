@@ -1,0 +1,35 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getAllAuthors } from "../../lib/books";
+import { withBase } from "../../lib/url";
+
+const authors = await getAllAuthors();
+---
+
+<BaseLayout title="Yazarlar" description="Okunan yazarların listesi ve yazar bazlı puan ortalamaları.">
+  <div class="mx-auto max-w-3xl px-5 py-10">
+    <h1 class="font-serif text-3xl text-ink">Yazarlar</h1>
+    <p class="mt-2 text-ink-soft">Şimdiye kadar {authors.length} farklı yazardan kitap okundu.</p>
+
+    <ul class="mt-8 flex flex-col divide-y divide-rule">
+      {
+        authors.map((author) => (
+          <li>
+            <a
+              href={withBase(`/yazarlar/${author.slug}/`)}
+              class="group flex items-center justify-between gap-4 py-4"
+            >
+              <div>
+                <p class="font-serif text-lg text-ink group-hover:text-leather">{author.name}</p>
+                <p class="text-sm text-ink-soft">
+                  {author.books.length} kitap
+                  {author.averageRating && `, ortalama puan ${author.averageRating}/10`}
+                </p>
+              </div>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</BaseLayout>

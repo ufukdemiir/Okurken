@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BookCard from "../../components/BookCard.astro";
+import { getAllAuthors } from "../../lib/books";
+
+export async function getStaticPaths() {
+  const authors = await getAllAuthors();
+  return authors.map((author) => ({ params: { yazar: author.slug }, props: { author } }));
+}
+
+const { author } = Astro.props;
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: author.name,
+};
+---
+
+<BaseLayout
+  title={author.name}
+  description={`${author.name} yazarının okunan kitapları${author.averageRating ? `, ortalama puan ${author.averageRating}/10` : ""}.`}
+  structuredData={structuredData}
+>
+  <div class="mx-auto max-w-5xl px-5 py-10">
+    <h1 class="font-serif text-3xl text-ink">{author.name}</h1>
+    <p class="mt-2 text-ink-soft">
+      {author.completedCount} kitap okundu
+      {author.averageRating && `, ortalama puan ${author.averageRating}/10`}
+    </p>
+
+    <div class="mt-8 grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
+      {author.books.map((book) => <BookCard book={book} />)}
+    </div>
+  </div>
+</BaseLayout>

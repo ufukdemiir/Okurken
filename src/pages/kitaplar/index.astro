@@ -1,0 +1,70 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BookCard from "../../components/BookCard.astro";
+import { getPublishedBooks, compareByStatusThenRecency, STATUS_LABELS_TR } from "../../lib/books";
+
+const books = (await getPublishedBooks()).sort(compareByStatusThenRecency);
+const statuses = ["all", "reading", "completed", "want-to-read", "dropped"] as const;
+---
+
+<BaseLayout title="Kitaplar" description="Okunan, okunmakta olan ve okunacak tüm kitapların listesi.">
+  <div class="mx-auto max-w-5xl px-5 py-10">
+    <h1 class="font-serif text-3xl text-ink">Kitaplar</h1>
+    <p class="mt-2 text-ink-soft">Toplam {books.length} kitap.</p>
+
+    <div class="mt-6 flex flex-wrap gap-2" id="status-filters">
+      {
+        statuses.map((s) => (
+          <button
+            type="button"
+            data-status={s}
+            class:list={["book-filter-chip", s === "all" && "is-active"]}
+          >
+            {s === "all" ? "Tümü" : STATUS_LABELS_TR[s]}
+          </button>
+        ))
+      }
+    </div>
+
+    <div id="book-grid" class="mt-6 grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
+      {
+        books.map((book) => (
+          <div data-status={book.data.status}>
+            <BookCard book={book} />
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .book-filter-chip {
+    border-radius: 999px;
+    border: 1px solid var(--color-rule);
+    padding: 0.35rem 0.9rem;
+    font-size: 0.875rem;
+    color: var(--color-ink-soft);
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .book-filter-chip.is-active {
+    border-color: var(--color-leather);
+    color: var(--color-leather);
+  }
+</style>
+
+<script>
+  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>("#status-filters [data-status]"));
+  const items = Array.from(document.querySelectorAll<HTMLElement>("#book-grid [data-status]"));
+
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const status = button.dataset.status;
+      buttons.forEach((b) => b.classList.toggle("is-active", b === button));
+      items.forEach((item) => {
+        const show = status === "all" || item.dataset.status === status;
+        item.style.display = show ? "" : "none";
+      });
+    });
+  });
+</script>

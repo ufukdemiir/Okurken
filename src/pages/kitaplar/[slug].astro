@@ -1,0 +1,185 @@
+---
+import { render } from "astro:content";
+import { getEntry } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ShareButtons from "../../components/ShareButtons.astro";
+import StatusBadge from "../../components/StatusBadge.astro";
+import { getPublishedBooks, type BookEntry } from "../../lib/books";
+import { getSpineColor } from "../../lib/spine";
+import { withBase } from "../../lib/url";
+import { turkishSlugify } from "../../lib/slugify";
+import { estimateReadingMinutes, formatDateTR } from "../../lib/reading";
+
+export async function getStaticPaths() {
+  const books = await getPublishedBooks();
+  return books.map((book) => ({ params: { slug: book.id }, props: { book } }));
+}
+
+interface Props {
+  book: BookEntry;
+}
+
+const { book } = Astro.props;
+const { Content } = await render(book);
+const {
+  title,
+  author,
+  publisher,
+  pageCount,
+  startDate,
+  endDate,
+  status,
+  rating,
+  genres,
+  notes,
+  quotes,
+} = book.data;
+
+const spine = getSpineColor(`${title}__${author}`);
+const authorSlug = turkishSlugify(author);
+const settings = await getEntry("settings", "main");
+const readerName = settings?.data.readerName ?? "Ufuk Demir";
+
+const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const reviewText = book.body ?? "";
+const readingMinutes = estimateReadingMinutes(reviewText);
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "Book",
+  name: title,
+  author: { "@type": "Person", name: author },
+  ...(pageCount ? { numberOfPages: pageCount } : {}),
+  ...(genres.length ? { genre: genres } : {}),
+  ...(publisher ? { publisher: { "@type": "Organization", name: publisher } } : {}),
+  ...(rating
+    ? {
+        review: {
+          "@type": "Review",
+          reviewRating: {
+            "@type": "Rating",
+            ratingValue: rating,
+            bestRating: 10,
+            worstRating: 1,
+          },
+          author: { "@type": "Person", name: readerName },
+          ...(endDate ? { datePublished: endDate.toISOString().slice(0, 10) } : {}),
+        },
+      }
+    : {}),
+};
+---
+
+<BaseLayout
+  title={title}
+  description={`${author} tarafından yazılan "${title}" kitabına dair ${readerName}'in incelemesi, notları ve alıntıları.`}
+  ogType="article"
+  structuredData={structuredData}
+>
+  <article class="mx-auto max-w-3xl px-5 py-10">
+    <a href={withBase("/arsiv/")} class="text-sm text-ink-soft hover:text-leather">← Arşive dön</a>
+
+    <div class="mt-6 flex flex-col gap-6 sm:flex-row">
+      <div
+        class="spine-texture flex aspect-[2/3] w-32 shrink-0 flex-col justify-between overflow-hidden rounded-md p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22),inset_0_-1px_0_rgba(0,0,0,0.22)] sm:w-40"
+        style={`background-color:${spine.bg}; color:${spine.ink}`}
+      >
+        <p class="font-serif text-lg leading-snug line-clamp-6">{title}</p>
+        <div>
+          <span class="mb-2 block h-px w-8 bg-current opacity-40"></span>
+          <p class="text-sm opacity-85 line-clamp-2">{author}</p>
+        </div>
+      </div>
+
+      <div class="flex-1">
+        <h1 class="font-serif text-3xl leading-tight text-ink">{title}</h1>
+        <a href={withBase(`/yazarlar/${authorSlug}/`)} class="mt-1 inline-block text-ink-soft hover:text-leather">
+          {author}
+        </a>
+        {publisher && <p class="mt-1 text-sm text-ink-soft">{publisher}</p>}
+
+        <dl class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-soft">
+          <div class="flex items-center gap-1.5">
+            <dt class="sr-only">Durum</dt>
+            <dd><StatusBadge status={status} /></dd>
+          </div>
+          {rating && (
+            <div>
+              <dt class="sr-only">Puan</dt>
+              <dd>{rating}/10</dd>
+            </div>
+          )}
+          {pageCount && (
+            <div>
+              <dt class="sr-only">Sayfa sayısı</dt>
+              <dd>{pageCount} sayfa</dd>
+            </div>
+          )}
+          {startDate && (
+            <div>
+              <dt class="sr-only">Başlangıç</dt>
+              <dd>Başlangıç: {formatDateTR(startDate)}</dd>
+            </div>
+          )}
+          {endDate && (
+            <div>
+              <dt class="sr-only">Bitiş</dt>
+              <dd>Bitiş: {formatDateTR(endDate)}</dd>
+            </div>
+          )}
+        </dl>
+
+        {genres.length > 0 && (
+          <ul class="mt-4 flex flex-wrap gap-2">
+            {genres.map((genre) => (
+              <li class="rounded-full border border-rule px-3 py-1 text-xs text-ink-soft">{genre}</li>
+            ))}
+          </ul>
+        )}
+
+        <ShareButtons url={pageUrl} title={title} class="mt-5" />
+      </div>
+    </div>
+
+    {reviewText.trim().length > 0 && (
+      <section id="inceleme" class="mt-12 scroll-mt-24">
+        <div class="flex items-baseline justify-between gap-3 border-b border-rule pb-2">
+          <h2 class="font-serif text-xl text-ink">İnceleme</h2>
+          <span class="text-sm text-ink-soft">{readingMinutes} dk okuma süresi</span>
+        </div>
+        <div class="prose-okurken prose mt-5 max-w-[68ch] dark:prose-invert">
+          <Content />
+        </div>
+      </section>
+    )}
+
+    {notes.length > 0 && (
+      <section class="mt-12">
+        <h2 class="border-b border-rule pb-2 font-serif text-xl text-ink">Notlar</h2>
+        <ul class="mt-5 flex flex-col gap-5">
+          {notes.map((note, index) => (
+            <li id={`not-${index}`} class="scroll-mt-24 border-l-2 border-rule pl-4">
+              <p class="max-w-[68ch] text-ink-soft">{note}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {quotes.length > 0 && (
+      <section class="mt-12">
+        <h2 class="border-b border-rule pb-2 font-serif text-xl text-ink">Alıntılar</h2>
+        <ul class="mt-5 flex flex-col gap-6">
+          {quotes.map((quote, index) => (
+            <li id={`alinti-${index}`} class="scroll-mt-24">
+              <blockquote class="border-l-2 border-gold pl-4 font-serif text-lg italic leading-relaxed text-ink">
+                “{quote.text}”
+              </blockquote>
+              {quote.page && <p class="mt-1 pl-4 text-sm text-ink-soft">Sayfa {quote.page}</p>}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </article>
+</BaseLayout>

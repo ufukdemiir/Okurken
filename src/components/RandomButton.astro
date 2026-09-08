@@ -1,0 +1,54 @@
+---
+import { getPublishedBooks, getAllQuotes, getAllNotes, getBooksWithReviews } from "../lib/books";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className = "" } = Astro.props;
+
+const [books, quotes, notes, reviews] = await Promise.all([
+  getPublishedBooks(),
+  getAllQuotes(),
+  getAllNotes(),
+  getBooksWithReviews(),
+]);
+
+const pool = [
+  ...books.map((b) => `/kitaplar/${b.id}/`),
+  ...quotes.map((q) => `/kitaplar/${q.book.id}/#alinti-${q.index}`),
+  ...notes.map((n) => `/kitaplar/${n.book.id}/#not-${n.index}`),
+  ...reviews.map((b) => `/kitaplar/${b.id}/#inceleme`),
+];
+---
+
+<button
+  id="surprise-btn"
+  type="button"
+  data-pool={JSON.stringify(pool)}
+  class={`inline-flex items-center gap-2 rounded-full border border-rule px-4 py-2 text-sm text-ink-soft transition-colors hover:border-leather hover:text-leather ${className}`}
+>
+  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="4" width="16" height="16" rx="3"></rect>
+    <circle cx="8.5" cy="8.5" r="1" fill="currentColor" stroke="none"></circle>
+    <circle cx="15.5" cy="8.5" r="1" fill="currentColor" stroke="none"></circle>
+    <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"></circle>
+    <circle cx="8.5" cy="15.5" r="1" fill="currentColor" stroke="none"></circle>
+    <circle cx="15.5" cy="15.5" r="1" fill="currentColor" stroke="none"></circle>
+  </svg>
+  Sürpriz yap
+</button>
+
+<script>
+  const button = document.getElementById("surprise-btn");
+  button?.addEventListener("click", () => {
+    const raw = button.getAttribute("data-pool") ?? "[]";
+    const pool: string[] = JSON.parse(raw);
+    if (!pool.length) return;
+    const choice = pool[Math.floor(Math.random() * pool.length)];
+    const base = import.meta.env.BASE_URL.endsWith("/")
+      ? import.meta.env.BASE_URL.slice(0, -1)
+      : import.meta.env.BASE_URL;
+    window.location.href = `${base}${choice}`;
+  });
+</script>
