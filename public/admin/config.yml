@@ -96,7 +96,7 @@ collections:
             widget: "object"
             fields:
               - { label: "Web Sitesi", name: "website", widget: "string", required: false }
-              - { label: "X (Twitter) kullanıcı adı", name: "twitter", widget: "string", required: false, hint: "Sadece kullanıcı adı, ör. ufukdemir" }
-              - { label: "Instagram kullanıcı adı", name: "instagram", widget: "string", required: false }
-              - { label: "Goodreads profil linki", name: "goodreads", widget: "string", required: false }
+              - { label: "GitHub linki", name: "github", widget: "string", required: false }
+              - { label: "LinkedIn linki", name: "linkedin", widget: "string", required: false }
+              - { label: "Pinterest linki", name: "pinterest", widget: "string", required: false }
               - { label: "E-posta", name: "email", widget: "string", required: false }
