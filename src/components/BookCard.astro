@@ -16,13 +16,17 @@ const href = withBase(`/kitaplar/${book.id}/`);
 
 <a href={href} class="group flex flex-col gap-3">
   <div
-    class="spine-texture relative flex aspect-[2/3] flex-col justify-between overflow-hidden rounded-md p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22),inset_0_-1px_0_rgba(0,0,0,0.22)] transition-transform duration-200 group-hover:-translate-y-1"
-    style={`background-color:${spine.bg}; color:${spine.ink}`}
+    class="relative flex aspect-[2/3] flex-col justify-between overflow-hidden rounded-md border border-rule bg-surface p-4 pl-5 transition-transform duration-200 group-hover:-translate-y-1"
   >
-    <p class="font-serif text-lg leading-snug line-clamp-5">{title}</p>
+    <span
+      class="spine-texture absolute inset-y-0 left-0 w-2"
+      style={`background-color:${spine.bg}`}
+      aria-hidden="true"
+    ></span>
+    <p class="font-serif text-lg leading-snug text-ink line-clamp-5">{title}</p>
     <div>
-      <span class="mb-2 block h-px w-8 bg-current opacity-40"></span>
-      <p class="text-sm opacity-85 line-clamp-2">{author}</p>
+      <span class="mb-2 block h-px w-8" style={`background-color:${spine.bg}`}></span>
+      <p class="text-sm text-ink-soft line-clamp-2">{author}</p>
     </div>
   </div>
   <div class="flex flex-col gap-1">
