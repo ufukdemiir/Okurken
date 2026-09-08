@@ -3,13 +3,13 @@ import { withBase } from "../lib/url";
 import ThemeToggle from "./ThemeToggle.astro";
 
 const navItems = [
+  { href: "/arsiv/", label: "Arşiv" },
   { href: "/kitaplar/", label: "Kitaplar" },
   { href: "/yazarlar/", label: "Yazarlar" },
   { href: "/alintilar/", label: "Alıntılar" },
   { href: "/incelemeler/", label: "İncelemeler" },
   { href: "/notlar/", label: "Notlar" },
   { href: "/istatistikler/", label: "İstatistikler" },
-  { href: "/arsiv/", label: "Arşiv" },
 ];
 
 const currentPath = Astro.url.pathname;
