@@ -81,13 +81,17 @@ const structuredData = {
 
     <div class="mt-6 flex flex-col gap-6 sm:flex-row">
       <div
-        class="spine-texture flex aspect-[2/3] w-32 shrink-0 flex-col justify-between overflow-hidden rounded-md p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22),inset_0_-1px_0_rgba(0,0,0,0.22)] sm:w-40"
-        style={`background-color:${spine.bg}; color:${spine.ink}`}
+        class="relative flex aspect-[2/3] w-32 shrink-0 flex-col justify-between overflow-hidden rounded-md border border-rule bg-surface p-4 pl-5 sm:w-40"
       >
-        <p class="font-serif text-lg leading-snug line-clamp-6">{title}</p>
+        <span
+          class="spine-texture absolute inset-y-0 left-0 w-2"
+          style={`background-color:${spine.bg}`}
+          aria-hidden="true"
+        ></span>
+        <p class="font-serif text-lg leading-snug text-ink line-clamp-6">{title}</p>
         <div>
-          <span class="mb-2 block h-px w-8 bg-current opacity-40"></span>
-          <p class="text-sm opacity-85 line-clamp-2">{author}</p>
+          <span class="mb-2 block h-px w-8" style={`background-color:${spine.bg}`}></span>
+          <p class="text-sm text-ink-soft line-clamp-2">{author}</p>
         </div>
       </div>
 

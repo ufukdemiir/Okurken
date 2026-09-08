@@ -51,9 +51,9 @@ const settings = defineCollection({
     yearlyGoal: z.number().int().positive(),
     social: z.object({
       website: z.string().optional().default(""),
-      twitter: z.string().optional().default(""),
-      instagram: z.string().optional().default(""),
-      goodreads: z.string().optional().default(""),
+      github: z.string().optional().default(""),
+      linkedin: z.string().optional().default(""),
+      pinterest: z.string().optional().default(""),
       email: z.string().optional().default(""),
     }),
   }),
