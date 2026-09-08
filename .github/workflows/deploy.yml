@@ -3,6 +3,8 @@ name: Okurken'i GitHub Pages'e Dağıt
 on:
   push:
     branches: ["main"]
+  # Decap CMS panelinden yapılan her kayıt da bu branch'e commit atar ve
+  # otomatik olarak bu workflow'u tetikler.
   workflow_dispatch:
 
 permissions:
@@ -10,6 +12,8 @@ permissions:
   pages: write
   id-token: write
 
+# Aynı anda yalnızca bir dağıtımın çalışmasına izin ver; yenisi başlarken
+# devam etmekte olanı iptal etme (yayında yarım kalmış bir build olmasın).
 concurrency:
   group: "pages"
   cancel-in-progress: false
