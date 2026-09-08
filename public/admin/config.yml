@@ -2,7 +2,7 @@ backend:
   name: github
   # ÖNEMLİ: "kullanici-adi/depo-adi" kısmını kendi GitHub kullanıcı adınız ve
   # deponuzun adıyla değiştirin (ör. "ufukdemir/okurken").
-  repo: kullanici-adi/okurken
+  repo: ufukdemiir/Okurken
   branch: main
   # Bu URL, README.md içindeki "Decap CMS için GitHub OAuth Kurulumu"
   # bölümünde kendi Cloudflare Worker adresinizle değiştirilmelidir.
@@ -18,8 +18,8 @@ locale: "tr"
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
-site_url: https://kullanici-adi.github.io/okurken
-display_url: https://kullanici-adi.github.io/okurken
+site_url: https://ufukdemiir.github.io/Okurken
+display_url: https://ufukdemiir.github.io/Okurken
 logo_url: /favicon.svg
 
 collections:
