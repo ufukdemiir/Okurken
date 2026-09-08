@@ -9,8 +9,8 @@ import tailwindcss from "@tailwindcss/vite";
 // adınıza ve depo adınıza göre güncelleyin.
 //   - Depo adı "kullaniciadi.github.io" ise: site: "https://kullaniciadi.github.io", base: "/"
 //   - Depo adı farklıysa (ör. "okurken"): site: "https://kullaniciadi.github.io", base: "/okurken"
-const SITE_URL = "https://ufukdemir.github.io";
-const BASE_PATH = "/okurken";
+const SITE_URL = "https://ufukdemiir.github.io";
+const BASE_PATH = "/Okurken";
 
 export default defineConfig({
   site: SITE_URL,
