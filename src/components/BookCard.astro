@@ -12,28 +12,27 @@ const { book } = Astro.props;
 const { title, author, status, rating } = book.data;
 const spine = getSpineColor(`${title}__${author}`);
 const href = withBase(`/kitaplar/${book.id}/`);
+// Spine renginin ~%8 opaklıktaki hâli — kutunun boş kalan alanını "kasıtlı
+// bir sadelik" gibi hissettirmek için zemine hafif bir ton verir.
+const tint = `${spine.bg}14`;
 ---
 
-<a href={href} class="group flex flex-col gap-3">
+<a href={href} class="group block">
   <div
-    class="relative flex aspect-[2/3] flex-col justify-between overflow-hidden rounded-md border border-rule bg-surface p-4 pl-5 transition-transform duration-200 group-hover:-translate-y-1"
+    class="relative flex aspect-[2/3] flex-col justify-between overflow-hidden rounded-md border border-rule p-4 pl-5 transition-transform duration-200 group-hover:-translate-y-1"
+    style={`background-color:${tint}`}
   >
     <span
-      class="spine-texture absolute inset-y-0 left-0 w-2"
+      class="spine-texture absolute inset-y-0 left-0 w-2.5"
       style={`background-color:${spine.bg}`}
       aria-hidden="true"
     ></span>
-    <p class="font-serif text-lg leading-snug text-ink line-clamp-5">{title}</p>
     <div>
-      <span class="mb-2 block h-px w-8" style={`background-color:${spine.bg}`}></span>
-      <p class="text-sm text-ink-soft line-clamp-2">{author}</p>
+      <p class="font-serif text-lg leading-snug text-ink line-clamp-6 transition-colors group-hover:text-leather">
+        {title}
+      </p>
+      <p class="mt-1 text-sm text-ink-soft line-clamp-2">{author}</p>
     </div>
-  </div>
-  <div class="flex flex-col gap-1">
-    <h3 class="font-serif text-base text-ink transition-colors group-hover:text-leather line-clamp-2">
-      {title}
-    </h3>
-    <p class="text-sm text-ink-soft line-clamp-1">{author}</p>
     <div class="flex items-center justify-between">
       <StatusBadge status={status} />
       {rating && <span class="text-sm text-ink-soft">{rating}/10</span>}
