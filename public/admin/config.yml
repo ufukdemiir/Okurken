@@ -61,7 +61,14 @@ collections:
           - { label: "Okunacak", value: "want-to-read" }
           - { label: "Yarım Bırakıldı", value: "dropped" }
       - { label: "Puan (1-10)", name: "rating", widget: "number", value_type: "int", min: 1, max: 10, required: false }
-      - { label: "Türler", name: "genres", widget: "list", field: { label: "Tür", name: "genre", widget: "string" }, required: false }
+      - {
+          label: "Türler",
+          name: "genres",
+          widget: "list",
+          field: { label: "Tür", name: "genre", widget: "string" },
+          required: false,
+          hint: "Serbest metin — istediğiniz herhangi bir türü yazabilirsiniz (ör. Dini Kitaplar, Dil Eğitimi, Yabancı Dil, Şiir). Sabit bir liste değildir.",
+        }
       - {
           label: "Eser Adı (birden fazla ciltse)",
           name: "seriesTitle",

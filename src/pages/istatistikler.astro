@@ -2,9 +2,11 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { computeStats } from "../lib/stats";
 import { STATUS_LABELS_TR } from "../lib/books";
+import { getPublishedPosts } from "../lib/blog";
 import { withBase } from "../lib/url";
 
 const stats = await computeStats();
+const totalBlogPosts = (await getPublishedPosts()).length;
 
 const summaryCards = [
   { label: "Toplam kitap", value: String(stats.totalBooks) },
@@ -128,9 +130,13 @@ const chartPayload = {
             <span class="text-ink-soft">Not</span>
             <span class="text-ink">{stats.totalNotes}</span>
           </div>
-          <div class="flex items-center justify-between py-2 text-sm">
+          <div class="flex items-center justify-between border-b border-rule py-2 text-sm">
             <span class="text-ink-soft">İnceleme</span>
             <span class="text-ink">{stats.totalReviews}</span>
+          </div>
+          <div class="flex items-center justify-between py-2 text-sm">
+            <span class="text-ink-soft">Blog yazısı</span>
+            <span class="text-ink">{totalBlogPosts}</span>
           </div>
         </div>
       </div>
