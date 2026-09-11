@@ -11,6 +11,7 @@ const KIND_COLOR_VAR: Record<ArchiveKind, string> = {
   review: "--color-leather",
   quote: "--color-gold",
   note: "--color-ink-soft",
+  blog: "--color-gold-soft",
 };
 
 const filters: { key: "all" | ArchiveKind; label: string }[] = [
@@ -19,12 +20,13 @@ const filters: { key: "all" | ArchiveKind; label: string }[] = [
   { key: "review", label: "İncelemeler" },
   { key: "quote", label: "Alıntılar" },
   { key: "note", label: "Notlar" },
+  { key: "blog", label: "Blog" },
 ];
 ---
 
 <BaseLayout
   title="Arşiv"
-  description="Kitaplar, incelemeler, alıntılar ve notların tarih sırasına göre aktığı merkezi arşiv."
+  description="Kitaplar, incelemeler, alıntılar, notlar ve blog yazılarının tarih sırasına göre aktığı merkezi arşiv."
 >
   <div class="mx-auto max-w-3xl px-5 py-10">
     <h1 class="font-serif text-3xl text-ink">Arşiv</h1>
@@ -44,7 +46,6 @@ const filters: { key: "all" | ArchiveKind; label: string }[] = [
       {
         items.map((item, index) => {
           const isLast = index === items.length - 1;
-          const bookHref = withBase(`/kitaplar/${item.book.id}/`);
           return (
             <li data-kind={item.kind} class="flex gap-4">
               <div class="flex flex-col items-center">
@@ -63,40 +64,50 @@ const filters: { key: "all" | ArchiveKind; label: string }[] = [
                 </div>
 
                 {item.kind === "book" && (
-                  <a href={bookHref} class="group mt-2 block">
-                    <p class="font-serif text-lg text-ink group-hover:text-leather">{item.book.data.title}</p>
-                    <p class="text-sm text-ink-soft">{item.book.data.author}</p>
+                  <a href={withBase(`/kitaplar/${item.book!.id}/`)} class="group mt-2 block">
+                    <p class="font-serif text-lg text-ink group-hover:text-leather">{item.book!.data.title}</p>
+                    <p class="text-sm text-ink-soft">{item.book!.data.author}</p>
                     <p class="mt-1 text-sm text-ink-soft">Okumaya başlandı</p>
                   </a>
                 )}
 
                 {item.kind === "review" && (
-                  <a href={withBase(`/kitaplar/${item.book.id}/#inceleme`)} class="group mt-2 block">
+                  <a href={withBase(`/kitaplar/${item.book!.id}/#inceleme`)} class="group mt-2 block">
                     <div class="flex flex-wrap items-baseline justify-between gap-x-3">
-                      <p class="font-serif text-lg text-ink group-hover:text-leather">{item.book.data.title}</p>
+                      <p class="font-serif text-lg text-ink group-hover:text-leather">{item.book!.data.title}</p>
                       <span class="text-xs text-ink-soft">{item.minutes} dk okuma süresi</span>
                     </div>
-                    <p class="text-sm text-ink-soft">{item.book.data.author}</p>
+                    <p class="text-sm text-ink-soft">{item.book!.data.author}</p>
                     <p class="mt-2 max-w-[62ch] text-sm text-ink-soft">{item.excerpt}</p>
                   </a>
                 )}
 
                 {item.kind === "quote" && (
-                  <a href={withBase(`/kitaplar/${item.book.id}/#alinti-${item.index}`)} class="group mt-2 block">
+                  <a href={withBase(`/kitaplar/${item.book!.id}/#alinti-${item.index}`)} class="group mt-2 block">
                     <blockquote class="border-l-2 border-gold pl-4 font-serif italic leading-relaxed text-ink">
                       “{item.text}”
                     </blockquote>
                     <p class="mt-1 pl-4 text-sm text-ink-soft group-hover:text-leather">
-                      {item.book.data.title}
+                      {item.book!.data.title}
                       {item.page ? `, sayfa ${item.page}` : ""}
                     </p>
                   </a>
                 )}
 
                 {item.kind === "note" && (
-                  <a href={withBase(`/kitaplar/${item.book.id}/#not-${item.index}`)} class="group mt-2 block">
+                  <a href={withBase(`/kitaplar/${item.book!.id}/#not-${item.index}`)} class="group mt-2 block">
                     <p class="max-w-[62ch] text-ink">{item.text}</p>
-                    <p class="mt-1 text-sm text-ink-soft group-hover:text-leather">{item.book.data.title}</p>
+                    <p class="mt-1 text-sm text-ink-soft group-hover:text-leather">{item.book!.data.title}</p>
+                  </a>
+                )}
+
+                {item.kind === "blog" && (
+                  <a href={withBase(`/blog/${item.post!.id}/`)} class="group mt-2 block">
+                    <div class="flex flex-wrap items-baseline justify-between gap-x-3">
+                      <p class="font-serif text-lg text-ink group-hover:text-leather">{item.post!.data.title}</p>
+                      <span class="text-xs text-ink-soft">{item.minutes} dk okuma süresi</span>
+                    </div>
+                    <p class="mt-2 max-w-[62ch] text-sm text-ink-soft">{item.excerpt}</p>
                   </a>
                 )}
               </div>

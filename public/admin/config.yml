@@ -62,6 +62,22 @@ collections:
           - { label: "Yarım Bırakıldı", value: "dropped" }
       - { label: "Puan (1-10)", name: "rating", widget: "number", value_type: "int", min: 1, max: 10, required: false }
       - { label: "Türler", name: "genres", widget: "list", field: { label: "Tür", name: "genre", widget: "string" }, required: false }
+      - {
+          label: "Eser Adı (birden fazla ciltse)",
+          name: "seriesTitle",
+          widget: "string",
+          required: false,
+          hint: "Yalnızca birden fazla ciltten oluşan eserler için doldurun. Tüm ciltlerde AYNI yazılmalı (ör. 'Savaş ve Barış'). Kitabın kendi başlığına cilt numarasını eklemenize gerek yok, otomatik gösterilir.",
+        }
+      - {
+          label: "Cilt Numarası",
+          name: "volumeNumber",
+          widget: "number",
+          value_type: "int",
+          min: 1,
+          required: false,
+          hint: "Yalnızca 'Eser Adı' doldurulduysa anlamlıdır.",
+        }
       - label: "Notlar"
         name: "notes"
         widget: "list"
@@ -75,6 +91,29 @@ collections:
           - { label: "Metin", name: "text", widget: "text" }
           - { label: "Sayfa", name: "page", widget: "number", value_type: "int", required: false, min: 1 }
       - { label: "İnceleme (Markdown)", name: "body", widget: "markdown", required: false }
+      - { label: "Taslak", name: "draft", widget: "boolean", default: false, required: false }
+
+  - name: "blog"
+    label: "Blog"
+    label_singular: "Yazı"
+    folder: "src/content/blog"
+    create: true
+    delete: true
+    slug: "{{slug}}"
+    summary: "{{title}}"
+    sortable_fields: ["publishDate", "title"]
+    fields:
+      - { label: "Başlık", name: "title", widget: "string" }
+      - { label: "Yayın Tarihi", name: "publishDate", widget: "datetime", format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - {
+          label: "Kısa Özet",
+          name: "excerpt",
+          widget: "text",
+          required: false,
+          hint: "Listeleme ve arama motoru açıklaması için. Boş bırakılırsa yazının ilk cümlelerinden otomatik üretilir.",
+        }
+      - { label: "Etiketler", name: "tags", widget: "list", field: { label: "Etiket", name: "tag", widget: "string" }, required: false }
+      - { label: "Yazı (Markdown)", name: "body", widget: "markdown" }
       - { label: "Taslak", name: "draft", widget: "boolean", default: false, required: false }
 
   - name: "settings"

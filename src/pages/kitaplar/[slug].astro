@@ -4,7 +4,7 @@ import { getEntry } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ShareButtons from "../../components/ShareButtons.astro";
 import StatusBadge from "../../components/StatusBadge.astro";
-import { getPublishedBooks, type BookEntry } from "../../lib/books";
+import { getPublishedBooks, getSeriesVolumes, type BookEntry } from "../../lib/books";
 import { getSpineColor } from "../../lib/spine";
 import { withBase } from "../../lib/url";
 import { turkishSlugify } from "../../lib/slugify";
@@ -33,6 +33,8 @@ const {
   genres,
   notes,
   quotes,
+  seriesTitle,
+  volumeNumber,
 } = book.data;
 
 const spine = getSpineColor(`${title}__${author}`);
@@ -44,14 +46,30 @@ const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
 const reviewText = book.body ?? "";
 const readingMinutes = estimateReadingMinutes(reviewText);
 
+// Birden fazla ciltten oluşan eserlerde, sekme başlığı ve meta açıklaması
+// cilt numarasıyla birlikte gösterilir (arama motorlarında ciltlerin
+// birbirinden ayırt edilebilmesi için).
+const pageTitle = volumeNumber ? `${title} — Cilt ${volumeNumber}` : title;
+const seriesVolumes = await getSeriesVolumes(book);
+const otherVolumes = seriesVolumes.filter((v) => v.id !== book.id);
+
 const structuredData = {
   "@context": "https://schema.org",
   "@type": "Book",
-  name: title,
+  name: pageTitle,
   author: { "@type": "Person", name: author },
   ...(pageCount ? { numberOfPages: pageCount } : {}),
   ...(genres.length ? { genre: genres } : {}),
   ...(publisher ? { publisher: { "@type": "Organization", name: publisher } } : {}),
+  ...(seriesTitle
+    ? {
+        isPartOf: {
+          "@type": "BookSeries",
+          name: seriesTitle,
+        },
+        ...(volumeNumber ? { position: volumeNumber } : {}),
+      }
+    : {}),
   ...(rating
     ? {
         review: {
@@ -71,8 +89,8 @@ const structuredData = {
 ---
 
 <BaseLayout
-  title={title}
-  description={`${author} tarafından yazılan "${title}" kitabına dair ${readerName}'in incelemesi, notları ve alıntıları.`}
+  title={pageTitle}
+  description={`${author} tarafından yazılan "${pageTitle}" kitabına dair ${readerName}'in incelemesi, notları ve alıntıları.`}
   ogType="article"
   structuredData={structuredData}
 >
@@ -97,7 +115,14 @@ const structuredData = {
       </div>
 
       <div class="flex-1">
-        <h1 class="font-serif text-3xl leading-tight text-ink">{title}</h1>
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 class="font-serif text-3xl leading-tight text-ink">{title}</h1>
+          {volumeNumber && (
+            <span class="rounded-full border border-rule px-2.5 py-0.5 text-sm text-ink-soft">
+              Cilt {volumeNumber}
+            </span>
+          )}
+        </div>
         <a href={withBase(`/yazarlar/${authorSlug}/`)} class="mt-1 inline-block text-ink-soft hover:text-leather">
           {author}
         </a>
@@ -142,7 +167,23 @@ const structuredData = {
           </ul>
         )}
 
-        <ShareButtons url={pageUrl} title={title} class="mt-5" />
+        {otherVolumes.length > 0 && (
+          <div class="mt-4">
+            <p class="text-sm text-ink-soft">
+              {seriesTitle} serisinin diğer ciltleri:{" "}
+              {otherVolumes.map((volume, i) => (
+                <>
+                  <a href={withBase(`/kitaplar/${volume.id}/`)} class="text-leather hover:underline">
+                    Cilt {volume.data.volumeNumber ?? "?"}
+                  </a>
+                  {i < otherVolumes.length - 1 ? ", " : ""}
+                </>
+              ))}
+            </p>
+          </div>
+        )}
+
+        <ShareButtons url={pageUrl} title={pageTitle} class="mt-5" />
       </div>
     </div>
 
@@ -155,6 +196,11 @@ const structuredData = {
         <div class="prose-okurken prose mt-5 max-w-[68ch] dark:prose-invert">
           <Content />
         </div>
+        <ShareButtons
+          url={new URL(withBase(`/kitaplar/${book.id}/#inceleme`), Astro.site).toString()}
+          title={`${title} incelemesi`}
+          class="mt-5"
+        />
       </section>
     )}
 

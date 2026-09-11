@@ -31,12 +31,15 @@ export interface OkurkenStats {
   totalPagesRead: number;
   averagePagesPerBook: number | null;
   averageDaysToFinish: number | null;
+  averageRating: number | null;
+  distinctAuthorCount: number;
   totalQuotes: number;
   totalNotes: number;
   totalReviews: number;
   genreDistribution: { genre: string; count: number }[];
   ratingHistogram: { rating: number; count: number }[];
   booksPerMonth: { label: string; count: number }[];
+  booksPerYear: { label: string; count: number }[];
   timeWindows: TimeWindowStat[];
   topRated: RankedList;
   mostQuoted: RankedList;
@@ -46,6 +49,8 @@ export interface OkurkenStats {
   fastestRead: DurationHighlight | null;
   slowestRead: DurationHighlight | null;
   mostReadAuthor: AuthorHighlight | null;
+  firstCompletedBook: BookEntry | null;
+  mostRecentCompletedBook: BookEntry | null;
 }
 
 /** Puana/sayıya göre sırala; eşitlik durumunda en son bitirileni öne al, ve
@@ -102,6 +107,13 @@ export async function computeStats(referenceYear = new Date().getFullYear()): Pr
   const totalNotes = books.reduce((sum, b) => sum + b.data.notes.length, 0);
   const totalReviews = books.filter((b) => (b.body ?? "").trim().length > 0).length;
 
+  const ratedBooks = books.map((b) => b.data.rating).filter((r): r is number => typeof r === "number");
+  const averageRating = ratedBooks.length
+    ? Math.round((ratedBooks.reduce((sum, r) => sum + r, 0) / ratedBooks.length) * 10) / 10
+    : null;
+
+  const distinctAuthorCount = new Set(books.map((b) => b.data.author)).size;
+
   const genreMap = new Map<string, number>();
   books.forEach((b) => b.data.genres.forEach((g) => genreMap.set(g, (genreMap.get(g) ?? 0) + 1)));
   const genreDistribution = [...genreMap.entries()]
@@ -123,6 +135,18 @@ export async function computeStats(referenceYear = new Date().getFullYear()): Pr
       (b) => b.data.endDate?.getFullYear() === referenceYear && b.data.endDate?.getMonth() === month,
     ).length;
     return { label, count };
+  });
+
+  // --- Yıllara göre bitirilen kitap sayısı (tüm zamanlar) ---
+  const finishedYears = completed
+    .map((b) => b.data.endDate?.getFullYear())
+    .filter((y): y is number => typeof y === "number");
+  const minYear = finishedYears.length ? Math.min(...finishedYears) : referenceYear;
+  const maxYear = finishedYears.length ? Math.max(...finishedYears, referenceYear) : referenceYear;
+  const booksPerYear = Array.from({ length: maxYear - minYear + 1 }, (_, i) => {
+    const year = minYear + i;
+    const count = completed.filter((b) => b.data.endDate?.getFullYear() === year).length;
+    return { label: String(year), count };
   });
 
   // --- Zaman dilimlerine göre özet (son 7 gün / bu ay / bu yıl / tüm zamanlar) ---
@@ -178,18 +202,30 @@ export async function computeStats(referenceYear = new Date().getFullYear()): Pr
     mostReadAuthor = null;
   }
 
+  // --- İlk ve en son bitirilen kitap (bitiş tarihi olan tamamlanmışlar arasında) ---
+  const completedWithEndDate = completed.filter((b) => b.data.endDate);
+  const firstCompletedBook = completedWithEndDate.length
+    ? completedWithEndDate.reduce((a, b) => ((b.data.endDate as Date) < (a.data.endDate as Date) ? b : a))
+    : null;
+  const mostRecentCompletedBook = completedWithEndDate.length
+    ? completedWithEndDate.reduce((a, b) => ((b.data.endDate as Date) > (a.data.endDate as Date) ? b : a))
+    : null;
+
   return {
     totalBooks: books.length,
     statusCounts,
     totalPagesRead,
     averagePagesPerBook,
     averageDaysToFinish,
+    averageRating,
+    distinctAuthorCount,
     totalQuotes,
     totalNotes,
     totalReviews,
     genreDistribution,
     ratingHistogram,
     booksPerMonth,
+    booksPerYear,
     timeWindows,
     topRated,
     mostQuoted,
@@ -199,5 +235,7 @@ export async function computeStats(referenceYear = new Date().getFullYear()): Pr
     fastestRead,
     slowestRead,
     mostReadAuthor,
+    firstCompletedBook,
+    mostRecentCompletedBook,
   };
 }

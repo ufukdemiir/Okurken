@@ -9,7 +9,7 @@ interface Props {
 }
 
 const { book } = Astro.props;
-const { title, author, status, rating } = book.data;
+const { title, author, status, rating, volumeNumber } = book.data;
 const spine = getSpineColor(`${title}__${author}`);
 const href = withBase(`/kitaplar/${book.id}/`);
 // Spine renginin ~%8 opaklıktaki hâli — kutunun boş kalan alanını "kasıtlı
@@ -32,6 +32,7 @@ const tint = `${spine.bg}14`;
         {title}
       </p>
       <p class="mt-1 text-sm text-ink-soft line-clamp-2">{author}</p>
+      {volumeNumber && <p class="text-xs text-ink-soft/70">Cilt {volumeNumber}</p>}
     </div>
     <div class="flex items-center justify-between">
       <StatusBadge status={status} />

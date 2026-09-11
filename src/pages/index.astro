@@ -6,22 +6,14 @@ import ReadingChallenge from "../components/ReadingChallenge.astro";
 import MonthlyWrapUp from "../components/MonthlyWrapUp.astro";
 import RandomButton from "../components/RandomButton.astro";
 import { withBase } from "../lib/url";
-import { getSpineColor } from "../lib/spine";
 import { getCurrentlyReading, getRecentlyFinished } from "../lib/books";
 
 const settings = await getEntry("settings", "main");
 const readerName = settings?.data.readerName ?? "Ufuk Demir";
-const avatarInitials = settings?.data.avatarInitials ?? "UD";
 const tagline = settings?.data.tagline ?? "";
 const bio = settings?.data.bio ?? "";
-const avatarSpine = getSpineColor(readerName);
 const social = settings?.data.social;
-
-const socialLinks = [
-  { href: social?.github, label: "GitHub", mark: "GH" },
-  { href: social?.linkedin, label: "LinkedIn", mark: "in" },
-  { href: social?.pinterest, label: "Pinterest", mark: "P" },
-].filter((l): l is { href: string; label: string; mark: string } => Boolean(l.href));
+const hasSocialLinks = Boolean(social?.github || social?.linkedin || social?.pinterest);
 
 const currentlyReading = await getCurrentlyReading();
 const recentlyFinished = await getRecentlyFinished(8);
@@ -31,42 +23,62 @@ const recentlyFinished = await getRecentlyFinished(8);
   <div class="mx-auto max-w-5xl px-5 py-10">
     <!-- Okur karşılama kartı -->
     <section class="border-b border-rule pb-10">
-      <div class="flex flex-col gap-6 sm:flex-row sm:items-start">
-        <div
-          class="spine-texture flex size-20 shrink-0 items-center justify-center rounded-md font-serif text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.22),inset_0_-1px_0_rgba(0,0,0,0.22)]"
-          style={`background-color:${avatarSpine.bg}; color:${avatarSpine.ink}`}
-          aria-hidden="true"
-        >
-          {avatarInitials}
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 class="font-serif text-3xl text-ink">{readerName}</h1>
+          <p class="mt-1 text-ink-soft">{tagline}</p>
         </div>
 
-        <div class="flex-1">
-          <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
-            <div>
-              <h1 class="font-serif text-3xl text-ink">{readerName}</h1>
-              <p class="mt-1 text-ink-soft">{tagline}</p>
+        {
+          hasSocialLinks && (
+            <div class="inline-flex divide-x divide-rule overflow-hidden rounded-full border border-rule">
+              {social?.github && (
+                <a
+                  href={social.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub"
+                  class="flex size-9 items-center justify-center text-ink-soft transition-colors hover:bg-paper hover:text-leather"
+                >
+                  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="6" y1="3" x2="6" y2="15" />
+                    <circle cx="18" cy="6" r="3" />
+                    <circle cx="6" cy="18" r="3" />
+                    <path d="M18 9a9 9 0 0 1-9 9" />
+                  </svg>
+                </a>
+              )}
+              {social?.linkedin && (
+                <a
+                  href={social.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                  class="flex size-9 items-center justify-center text-sm font-semibold text-ink-soft transition-colors hover:bg-paper hover:text-leather"
+                >
+                  in
+                </a>
+              )}
+              {social?.pinterest && (
+                <a
+                  href={social.pinterest}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Pinterest"
+                  class="flex size-9 items-center justify-center text-ink-soft transition-colors hover:bg-paper hover:text-leather"
+                >
+                  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11Z" />
+                    <circle cx="12" cy="10" r="2.5" />
+                  </svg>
+                </a>
+              )}
             </div>
-            {
-              socialLinks.length > 0 && (
-                <div class="flex items-center gap-2">
-                  {socialLinks.map((link) => (
-                    <a
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={link.label}
-                      class="grid size-8 place-items-center rounded-full border border-rule text-xs font-medium text-ink-soft transition-colors hover:border-leather hover:text-leather"
-                    >
-                      {link.mark}
-                    </a>
-                  ))}
-                </div>
-              )
-            }
-          </div>
-          <p class="mt-3 max-w-[60ch] text-ink-soft">{bio}</p>
-        </div>
+          )
+        }
       </div>
+
+      <p class="mt-3 max-w-[62ch] text-ink-soft">{bio}</p>
 
       <div class="mt-6 flex flex-wrap gap-2">
         <RandomButton kind="book" />

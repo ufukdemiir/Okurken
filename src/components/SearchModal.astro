@@ -32,6 +32,7 @@
     <button type="button" data-kind="quote" class="search-filter-chip">Alıntılar</button>
     <button type="button" data-kind="review" class="search-filter-chip">İncelemeler</button>
     <button type="button" data-kind="note" class="search-filter-chip">Notlar</button>
+    <button type="button" data-kind="blog" class="search-filter-chip">Blog</button>
   </div>
 
   <div id="search-results" class="max-h-[55vh] overflow-y-auto p-2">
@@ -64,7 +65,7 @@
   import Fuse from "fuse.js";
 
   interface SearchIndexItem {
-    kind: "book" | "author" | "quote" | "review" | "note";
+    kind: "book" | "author" | "quote" | "review" | "note" | "blog";
     title: string;
     subtitle: string;
     text: string;
@@ -77,6 +78,7 @@
     quote: "Alıntı",
     review: "İnceleme",
     note: "Not",
+    blog: "Blog",
   };
 
   const dialog = document.getElementById("search-modal") as HTMLDialogElement | null;

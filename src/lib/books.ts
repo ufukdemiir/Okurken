@@ -155,3 +155,17 @@ export function compareByStatusThenRecency(a: BookEntry, b: BookEntry): number {
   if (statusDiff !== 0) return statusDiff;
   return timeOf(b) - timeOf(a);
 }
+
+/** Aynı `seriesTitle` değerine sahip diğer ciltleri, cilt numarasına göre sıralı döndürür. */
+export async function getSeriesVolumes(book: BookEntry): Promise<BookEntry[]> {
+  if (!book.data.seriesTitle) return [];
+  const books = await getPublishedBooks();
+  return books
+    .filter((b) => b.data.seriesTitle === book.data.seriesTitle)
+    .sort((a, b) => (a.data.volumeNumber ?? 0) - (b.data.volumeNumber ?? 0));
+}
+
+/** Çok ciltli eserlerde "Cilt N" ekiyle birlikte görüntüleme başlığı üretir. */
+export function getDisplayTitle(book: BookEntry): string {
+  return book.data.volumeNumber ? `${book.data.title} — Cilt ${book.data.volumeNumber}` : book.data.title;
+}

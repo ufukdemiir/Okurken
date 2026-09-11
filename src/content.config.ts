@@ -30,7 +30,27 @@ const books = defineCollection({
         }),
       )
       .default([]),
+    // Birden fazla ciltten oluşan eserler için (ör. "Savaş ve Barış - Cilt 2").
+    // seriesTitle aynı olan kayıtlar otomatik olarak birbirine bağlanır.
+    seriesTitle: z.string().optional(),
+    volumeNumber: z.number().int().positive().optional(),
     // Decap CMS'in "editöryal iş akışı" (taslak) kullanımı için.
+    draft: z.boolean().default(false),
+  }),
+});
+
+// ---------------------------------------------------------------------------
+// "blog" — kitaplarla sınırlı olmayan, bağımsız yazılar. /notlar sekmesinin
+// sağına eklenen ayrı bir platform bölümü.
+// ---------------------------------------------------------------------------
+const blog = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/blog" }),
+  schema: z.object({
+    title: z.string(),
+    publishDate: z.coerce.date(),
+    // Liste/SEO açıklaması olarak kullanılır; boşsa gövdeden otomatik üretilir.
+    excerpt: z.string().optional().default(""),
+    tags: z.array(z.string()).default([]),
     draft: z.boolean().default(false),
   }),
 });
@@ -59,4 +79,4 @@ const settings = defineCollection({
   }),
 });
 
-export const collections = { books, settings };
+export const collections = { books, settings, blog };

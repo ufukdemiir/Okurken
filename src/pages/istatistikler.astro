@@ -14,6 +14,8 @@ const summaryCards = [
     label: "Ort. bitirme süresi",
     value: stats.averageDaysToFinish ? `${stats.averageDaysToFinish} gün` : "—",
   },
+  { label: "Ortalama puan", value: stats.averageRating ? `${stats.averageRating}/10` : "—" },
+  { label: "Farklı yazar", value: String(stats.distinctAuthorCount) },
 ];
 
 const highlights = [
@@ -39,6 +41,23 @@ const highlights = [
       book: stats.slowestRead.book,
       metric: `${stats.slowestRead.days} günde`,
     },
+  stats.firstCompletedBook && {
+    label: "İlk bitirilen kitap",
+    book: stats.firstCompletedBook,
+    metric: stats.firstCompletedBook.data.endDate
+      ? new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric" }).format(stats.firstCompletedBook.data.endDate)
+      : "",
+  },
+  stats.mostRecentCompletedBook &&
+    stats.mostRecentCompletedBook.id !== stats.firstCompletedBook?.id && {
+      label: "En son bitirilen kitap",
+      book: stats.mostRecentCompletedBook,
+      metric: stats.mostRecentCompletedBook.data.endDate
+        ? new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric" }).format(
+            stats.mostRecentCompletedBook.data.endDate,
+          )
+        : "",
+    },
 ].filter((h): h is { label: string; book: (typeof stats.longestBook & {}); metric: string } => Boolean(h));
 
 // JSON.stringify metotlarında Chart.js için gereken diziler.
@@ -49,6 +68,8 @@ const chartPayload = {
   ratingValues: stats.ratingHistogram.map((r) => r.count),
   monthLabels: stats.booksPerMonth.map((m) => m.label),
   monthValues: stats.booksPerMonth.map((m) => m.count),
+  yearLabels: stats.booksPerYear.map((y) => y.label),
+  yearValues: stats.booksPerYear.map((y) => y.count),
 };
 ---
 
@@ -58,7 +79,7 @@ const chartPayload = {
     <p class="mt-2 text-ink-soft">Tüm veriler derleme anında (build-time) hesaplanır.</p>
 
     <!-- Genel özet -->
-    <div class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
       {
         summaryCards.map((card) => (
           <div class="rounded-xl border border-rule bg-surface p-4">
@@ -87,25 +108,30 @@ const chartPayload = {
     <div class="mt-10 grid gap-4 sm:grid-cols-2">
       <div class="rounded-xl border border-rule bg-surface p-4">
         <p class="mb-2 text-sm text-ink-soft">Durum dağılımı</p>
-        {
-          Object.entries(stats.statusCounts).map(([status, count]) => (
-            <div class="flex items-center justify-between border-b border-rule py-2 text-sm">
-              <span class="text-ink-soft">{STATUS_LABELS_TR[status as keyof typeof STATUS_LABELS_TR]}</span>
-              <span class="text-ink">{count}</span>
-            </div>
-          ))
-        }
-        <div class="flex items-center justify-between py-2 text-sm">
-          <span class="text-ink-soft">Alıntı</span>
-          <span class="text-ink">{stats.totalQuotes}</span>
+        <div>
+          {
+            Object.entries(stats.statusCounts).map(([status, count]) => (
+              <div class="flex items-center justify-between border-b border-rule py-2 text-sm last:border-none">
+                <span class="text-ink-soft">{STATUS_LABELS_TR[status as keyof typeof STATUS_LABELS_TR]}</span>
+                <span class="text-ink">{count}</span>
+              </div>
+            ))
+          }
         </div>
-        <div class="flex items-center justify-between border-t border-rule py-2 text-sm">
-          <span class="text-ink-soft">Not</span>
-          <span class="text-ink">{stats.totalNotes}</span>
-        </div>
-        <div class="flex items-center justify-between border-t border-rule py-2 text-sm last:border-none">
-          <span class="text-ink-soft">İnceleme</span>
-          <span class="text-ink">{stats.totalReviews}</span>
+        <p class="mb-2 mt-4 border-t border-dashed border-rule pt-4 text-sm text-ink-soft">İçerik</p>
+        <div>
+          <div class="flex items-center justify-between border-b border-rule py-2 text-sm">
+            <span class="text-ink-soft">Alıntı</span>
+            <span class="text-ink">{stats.totalQuotes}</span>
+          </div>
+          <div class="flex items-center justify-between border-b border-rule py-2 text-sm">
+            <span class="text-ink-soft">Not</span>
+            <span class="text-ink">{stats.totalNotes}</span>
+          </div>
+          <div class="flex items-center justify-between py-2 text-sm">
+            <span class="text-ink-soft">İnceleme</span>
+            <span class="text-ink">{stats.totalReviews}</span>
+          </div>
         </div>
       </div>
       <div class="rounded-xl border border-rule bg-surface p-4">
@@ -123,6 +149,11 @@ const chartPayload = {
         <p class="mb-2 text-sm text-ink-soft">Aylık bitirilen kitap sayısı</p>
         <canvas id="chart-monthly" height="220" role="img" aria-label="Aylık okuma grafiği"></canvas>
       </div>
+    </div>
+
+    <div class="mt-4 rounded-xl border border-rule bg-surface p-4">
+      <p class="mb-2 text-sm text-ink-soft">Yıllara göre bitirilen kitap sayısı</p>
+      <canvas id="chart-yearly" height="120" role="img" aria-label="Yıllara göre okuma grafiği"></canvas>
     </div>
 
     <!-- Öne çıkanlar -->
@@ -241,22 +272,37 @@ const chartPayload = {
     ratingValues: number[];
     monthLabels: string[];
     monthValues: number[];
+    yearLabels: string[];
+    yearValues: number[];
   }
 
   const payloadEl = document.getElementById("stats-payload");
   const payload: ChartPayload = JSON.parse(payloadEl?.textContent ?? "{}");
-  const { genreLabels, genreValues, ratingLabels, ratingValues, monthLabels, monthValues } = payload;
+  const {
+    genreLabels,
+    genreValues,
+    ratingLabels,
+    ratingValues,
+    monthLabels,
+    monthValues,
+    yearLabels,
+    yearValues,
+  } = payload;
 
   const styles = getComputedStyle(document.documentElement);
   const cssVar = (name: string) => styles.getPropertyValue(name).trim() || "#999999";
-  const palette = [
-    cssVar("--color-leather"),
-    cssVar("--color-teal"),
-    cssVar("--color-gold"),
-    cssVar("--color-ink-soft"),
-    cssVar("--color-leather-soft"),
-    cssVar("--color-teal-soft"),
-    cssVar("--color-gold-soft"),
+  // Tür dağılımı grafiği için özel olarak seçilmiş, birbirinden kolay
+  // ayırt edilebilen palet (aynı tonun açık/koyu varyantları yerine
+  // farklı renk ailelerinden, temaya uygun, cilt kumaşı esintili tonlar).
+  const genrePalette = [
+    "#6E3B22", // deri kahvesi
+    "#223752", // lacivert
+    "#A67C1E", // hardal
+    "#2F4A3A", // koyu yeşil
+    "#7A2E2E", // bordo
+    "#5B3868", // mor
+    "#3D5A6C", // çelik mavisi
+    "#A65A2E", // tarçın
   ];
   const rule = cssVar("--color-rule");
 
@@ -272,7 +318,7 @@ const chartPayload = {
         datasets: [
           {
             data: genreValues,
-            backgroundColor: genreLabels.map((_, i) => palette[i % palette.length]),
+            backgroundColor: genreLabels.map((_, i) => genrePalette[i % genrePalette.length]),
             borderColor: "transparent",
           },
         ],
@@ -314,6 +360,25 @@ const chartPayload = {
         scales: {
           x: { grid: { display: false } },
           y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: rule } },
+        },
+      },
+    });
+  }
+
+  const yearlyCanvas = document.getElementById("chart-yearly") as HTMLCanvasElement | null;
+  if (yearlyCanvas && yearLabels?.length) {
+    new Chart(yearlyCanvas, {
+      type: "bar",
+      data: {
+        labels: yearLabels,
+        datasets: [{ data: yearValues, backgroundColor: cssVar("--color-gold") }],
+      },
+      options: {
+        indexAxis: "y",
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: rule } },
+          y: { grid: { display: false } },
         },
       },
     });
