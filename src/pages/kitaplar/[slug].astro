@@ -165,6 +165,11 @@ const structuredData = {
           {notes.map((note, index) => (
             <li id={`not-${index}`} class="scroll-mt-24 border-l-2 border-rule pl-4">
               <p class="max-w-[68ch] text-ink-soft">{note}</p>
+              <ShareButtons
+                url={new URL(withBase(`/kitaplar/${book.id}/#not-${index}`), Astro.site).toString()}
+                title={`${title} üzerine bir not`}
+                class="mt-2"
+              />
             </li>
           ))}
         </ul>
@@ -181,6 +186,11 @@ const structuredData = {
                 “{quote.text}”
               </blockquote>
               {quote.page && <p class="mt-1 pl-4 text-sm text-ink-soft">Sayfa {quote.page}</p>}
+              <ShareButtons
+                url={new URL(withBase(`/kitaplar/${book.id}/#alinti-${index}`), Astro.site).toString()}
+                title={`"${quote.text.slice(0, 100)}${quote.text.length > 100 ? "…" : ""}" — ${title}`}
+                class="mt-2 ml-4"
+              />
             </li>
           ))}
         </ul>

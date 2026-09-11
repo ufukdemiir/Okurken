@@ -2,10 +2,11 @@
 import { getPublishedBooks } from "../lib/books";
 
 interface Props {
+  variant?: "button" | "link";
   class?: string;
 }
 
-const { class: className = "" } = Astro.props;
+const { variant = "button", class: className = "" } = Astro.props;
 
 const books = await getPublishedBooks();
 const exportData = books.map((b) => ({
@@ -21,14 +22,14 @@ const exportData = books.map((b) => ({
   notes: b.data.notes,
   quotes: b.data.quotes,
 }));
+
+const baseClass =
+  variant === "button"
+    ? "inline-flex items-center gap-2 rounded-full border border-rule px-4 py-2 text-sm text-ink-soft transition-colors hover:border-leather hover:text-leather"
+    : "inline-flex items-center gap-1 text-xs text-ink-soft/70 transition-colors hover:text-leather";
 ---
 
-<button
-  id="export-btn"
-  type="button"
-  data-export={JSON.stringify(exportData)}
-  class={`inline-flex items-center gap-2 rounded-full border border-rule px-4 py-2 text-sm text-ink-soft transition-colors hover:border-leather hover:text-leather ${className}`}
->
+<button type="button" data-export={JSON.stringify(exportData)} class={`${baseClass} ${className}`}>
   <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 3v12m0 0-4-4m4 4 4-4"></path>
     <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path>
@@ -37,17 +38,22 @@ const exportData = books.map((b) => ({
 </button>
 
 <script>
-  const button = document.getElementById("export-btn");
-  button?.addEventListener("click", () => {
-    const data = button.getAttribute("data-export") ?? "[]";
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "okurken-arsiv.json";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-  });
+  // Birden fazla örnek olabileceği için tek bir olay temsilcisi kullanılır.
+  if (!(window as any).__okurkenExportBound) {
+    (window as any).__okurkenExportBound = true;
+    document.addEventListener("click", (event) => {
+      const button = (event.target as HTMLElement)?.closest<HTMLButtonElement>("[data-export]");
+      if (!button) return;
+      const data = button.getAttribute("data-export") ?? "[]";
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "okurken-arsiv.json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    });
+  }
 </script>

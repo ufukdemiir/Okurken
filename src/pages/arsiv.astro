@@ -53,7 +53,7 @@ const filters: { key: "all" | ArchiveKind; label: string }[] = [
                   style={`background-color: var(${KIND_COLOR_VAR[item.kind]})`}
                   aria-hidden="true"
                 />
-                {!isLast && <span class="mt-1 w-px flex-1 bg-rule" aria-hidden="true" />}
+                {!isLast && <span class="archive-connector mt-1 w-px flex-1 bg-rule" aria-hidden="true" />}
               </div>
 
               <div class="flex-1 pb-8">
@@ -107,6 +107,8 @@ const filters: { key: "all" | ArchiveKind; label: string }[] = [
     </ol>
 
     {items.length === 0 && <p class="mt-8 text-ink-soft">Henüz arşivde içerik yok.</p>}
+
+    <div id="pagination"></div>
   </div>
 </BaseLayout>
 
@@ -126,17 +128,42 @@ const filters: { key: "all" | ArchiveKind; label: string }[] = [
 </style>
 
 <script>
+  import { createPager } from "../lib/pagination-client";
+
   const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>("#archive-filters [data-kind]"));
   const items = Array.from(document.querySelectorAll<HTMLLIElement>("#archive-list > [data-kind]"));
+  const paginationEl = document.getElementById("pagination");
+
+  let activeKind = "all";
+
+  // Zaman çizgisindeki bağlayıcı çizgi, o an EKRANDA GÖRÜNEN son öğenin
+  // altında görünmemeli (aksi hâlde bir sonraki gizli öğeye "asılı kalır").
+  function fixLastConnector() {
+    const visible = items.filter((item) => item.style.display !== "none");
+    items.forEach((item) => {
+      const connector = item.querySelector<HTMLElement>(".archive-connector");
+      if (!connector) return;
+      const isLastVisible = visible[visible.length - 1] === item;
+      connector.style.visibility = isLastVisible ? "hidden" : "";
+    });
+  }
+
+  const pager = paginationEl
+    ? createPager({
+        items,
+        container: paginationEl,
+        pageSize: 12,
+        isEligible: (item) => activeKind === "all" || item.dataset.kind === activeKind,
+        onPageChange: () => paginationEl.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+        afterRender: fixLastConnector,
+      })
+    : null;
 
   buttons.forEach((button) => {
     button.addEventListener("click", () => {
-      const kind = button.dataset.kind;
+      activeKind = button.dataset.kind ?? "all";
       buttons.forEach((b) => b.classList.toggle("is-active", b === button));
-      items.forEach((item) => {
-        const show = kind === "all" || item.dataset.kind === kind;
-        item.style.display = show ? "" : "none";
-      });
+      pager?.reset();
     });
   });
 </script>

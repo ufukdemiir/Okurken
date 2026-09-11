@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import ShareButtons from "../components/ShareButtons.astro";
 import { getAllNotes } from "../lib/books";
 import { withBase } from "../lib/url";
 import { formatDateTR } from "../lib/reading";
@@ -14,10 +15,11 @@ const notes = await getAllNotes();
 
     {notes.length === 0 && <p class="mt-8 text-ink-soft">Henüz eklenmiş bir not yok.</p>}
 
-    <ul class="mt-8 flex flex-col gap-6">
+    <ul id="note-list" class="mt-8 flex flex-col gap-6">
       {
         notes.map((note) => {
           const relativeUrl = `/kitaplar/${note.book.id}/#not-${note.index}`;
+          const absoluteUrl = new URL(withBase(relativeUrl), Astro.site).toString();
           const date = note.book.data.endDate ?? note.book.data.startDate;
           return (
             <li id={`not-${note.book.id}-${note.index}`} class="scroll-mt-24 border-l-2 border-rule pl-4">
@@ -26,10 +28,32 @@ const notes = await getAllNotes();
                 <span class="text-sm text-ink-soft group-hover:text-leather">{note.book.data.title}</span>
                 {date && <span class="text-xs text-ink-soft/70">{formatDateTR(date)}</span>}
               </a>
+              <ShareButtons
+                url={absoluteUrl}
+                title={`${note.book.data.title} üzerine bir not`}
+                class="mt-2"
+              />
             </li>
           );
         })
       }
     </ul>
+
+    <div id="pagination"></div>
   </div>
 </BaseLayout>
+
+<script>
+  import { createPager } from "../lib/pagination-client";
+
+  const items = Array.from(document.querySelectorAll<HTMLLIElement>("#note-list > li"));
+  const paginationEl = document.getElementById("pagination");
+  if (paginationEl) {
+    createPager({
+      items,
+      container: paginationEl,
+      pageSize: 10,
+      onPageChange: () => paginationEl.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+    });
+  }
+</script>

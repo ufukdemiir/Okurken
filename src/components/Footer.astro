@@ -1,17 +1,17 @@
 ---
 import { getEntry } from "astro:content";
 import { withBase } from "../lib/url";
+import ExportDataButton from "./ExportDataButton.astro";
 
 const settings = await getEntry("settings", "main");
 const social = settings?.data.social;
 const readerName = settings?.data.readerName ?? "Ufuk Demir";
 const year = new Date().getFullYear();
 
+// GitHub/LinkedIn/Pinterest ana sayfadaki okur kartında buton olarak
+// gösteriliyor; burada yalnızca genel amaçlı bağlantılar kalıyor.
 const links = [
   { href: social?.website, label: "Web sitesi" },
-  { href: social?.github, label: "GitHub" },
-  { href: social?.linkedin, label: "LinkedIn" },
-  { href: social?.pinterest, label: "Pinterest" },
   { href: social?.email && `mailto:${social.email}`, label: "E-posta" },
 ].filter((l): l is { href: string; label: string } => Boolean(l.href));
 ---
@@ -39,9 +39,10 @@ const links = [
       )
     }
   </div>
-  <div class="mx-auto max-w-5xl px-5 pb-8">
+  <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-5 pb-8">
     <a href={withBase("/admin/")} class="text-xs text-ink-soft/70 hover:text-leather">
       Yönetim paneli
     </a>
+    <ExportDataButton variant="link" />
   </div>
 </footer>

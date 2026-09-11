@@ -6,13 +6,6 @@ import { withBase } from "../lib/url";
 
 const stats = await computeStats();
 
-const genreLabels = stats.genreDistribution.map((g) => g.genre);
-const genreValues = stats.genreDistribution.map((g) => g.count);
-const ratingLabels = stats.ratingHistogram.map((r) => String(r.rating));
-const ratingValues = stats.ratingHistogram.map((r) => r.count);
-const monthLabels = stats.booksPerMonth.map((m) => m.label);
-const monthValues = stats.booksPerMonth.map((m) => m.count);
-
 const summaryCards = [
   { label: "Toplam kitap", value: String(stats.totalBooks) },
   { label: "Okunan sayfa", value: stats.totalPagesRead.toLocaleString("tr-TR") },
@@ -22,6 +15,41 @@ const summaryCards = [
     value: stats.averageDaysToFinish ? `${stats.averageDaysToFinish} gün` : "—",
   },
 ];
+
+const highlights = [
+  stats.longestBook && {
+    label: "En uzun kitap",
+    book: stats.longestBook,
+    metric: `${stats.longestBook.data.pageCount} sayfa`,
+  },
+  stats.shortestBook &&
+    stats.shortestBook.id !== stats.longestBook?.id && {
+      label: "En kısa kitap",
+      book: stats.shortestBook,
+      metric: `${stats.shortestBook.data.pageCount} sayfa`,
+    },
+  stats.fastestRead && {
+    label: "En hızlı bitirilen",
+    book: stats.fastestRead.book,
+    metric: stats.fastestRead.days === 0 ? "Aynı gün" : `${stats.fastestRead.days} günde`,
+  },
+  stats.slowestRead &&
+    stats.slowestRead.book.id !== stats.fastestRead?.book.id && {
+      label: "En uzun süren okuma",
+      book: stats.slowestRead.book,
+      metric: `${stats.slowestRead.days} günde`,
+    },
+].filter((h): h is { label: string; book: (typeof stats.longestBook & {}); metric: string } => Boolean(h));
+
+// JSON.stringify metotlarında Chart.js için gereken diziler.
+const chartPayload = {
+  genreLabels: stats.genreDistribution.map((g) => g.genre),
+  genreValues: stats.genreDistribution.map((g) => g.count),
+  ratingLabels: stats.ratingHistogram.map((r) => String(r.rating)),
+  ratingValues: stats.ratingHistogram.map((r) => r.count),
+  monthLabels: stats.booksPerMonth.map((m) => m.label),
+  monthValues: stats.booksPerMonth.map((m) => m.count),
+};
 ---
 
 <BaseLayout title="İstatistikler" description="Okuma alışkanlıkları üzerine sayılar ve grafikler.">
@@ -29,6 +57,7 @@ const summaryCards = [
     <h1 class="font-serif text-3xl text-ink">İstatistikler</h1>
     <p class="mt-2 text-ink-soft">Tüm veriler derleme anında (build-time) hesaplanır.</p>
 
+    <!-- Genel özet -->
     <div class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
       {
         summaryCards.map((card) => (
@@ -40,16 +69,44 @@ const summaryCards = [
       }
     </div>
 
-    <div class="mt-8 grid gap-4 sm:grid-cols-2">
+    <!-- Zaman dilimleri -->
+    <h2 class="mt-10 font-serif text-lg text-ink">Zaman dilimlerine göre</h2>
+    <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {
+        stats.timeWindows.map((w) => (
+          <div class="rounded-xl border border-rule bg-surface p-4">
+            <p class="text-sm text-ink-soft">{w.label}</p>
+            <p class="mt-1 font-serif text-xl text-ink">{w.booksFinished} kitap</p>
+            <p class="text-sm text-ink-soft">{w.pagesRead.toLocaleString("tr-TR")} sayfa</p>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- Durum + tür/puan/aylık grafikleri -->
+    <div class="mt-10 grid gap-4 sm:grid-cols-2">
       <div class="rounded-xl border border-rule bg-surface p-4">
+        <p class="mb-2 text-sm text-ink-soft">Durum dağılımı</p>
         {
           Object.entries(stats.statusCounts).map(([status, count]) => (
-            <div class="flex items-center justify-between border-b border-rule py-2 text-sm last:border-none">
+            <div class="flex items-center justify-between border-b border-rule py-2 text-sm">
               <span class="text-ink-soft">{STATUS_LABELS_TR[status as keyof typeof STATUS_LABELS_TR]}</span>
               <span class="text-ink">{count}</span>
             </div>
           ))
         }
+        <div class="flex items-center justify-between py-2 text-sm">
+          <span class="text-ink-soft">Alıntı</span>
+          <span class="text-ink">{stats.totalQuotes}</span>
+        </div>
+        <div class="flex items-center justify-between border-t border-rule py-2 text-sm">
+          <span class="text-ink-soft">Not</span>
+          <span class="text-ink">{stats.totalNotes}</span>
+        </div>
+        <div class="flex items-center justify-between border-t border-rule py-2 text-sm last:border-none">
+          <span class="text-ink-soft">İnceleme</span>
+          <span class="text-ink">{stats.totalReviews}</span>
+        </div>
       </div>
       <div class="rounded-xl border border-rule bg-surface p-4">
         <p class="mb-2 text-sm text-ink-soft">Tür dağılımı</p>
@@ -68,12 +125,52 @@ const summaryCards = [
       </div>
     </div>
 
-    <div class="mt-8 grid gap-6 sm:grid-cols-3">
+    <!-- Öne çıkanlar -->
+    {
+      highlights.length > 0 && (
+        <>
+          <h2 class="mt-10 font-serif text-lg text-ink">Öne çıkanlar</h2>
+          <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {highlights.map((h) => (
+              <a
+                href={withBase(`/kitaplar/${h.book!.id}/`)}
+                class="group rounded-xl border border-rule bg-surface p-4 transition-colors hover:border-leather"
+              >
+                <p class="text-sm text-ink-soft">{h.label}</p>
+                <p class="mt-1 font-serif text-base text-ink group-hover:text-leather line-clamp-2">
+                  {h.book!.data.title}
+                </p>
+                <p class="text-sm text-ink-soft">{h.metric}</p>
+              </a>
+            ))}
+            {stats.mostReadAuthor && (
+              <a
+                href={withBase(`/yazarlar/${stats.mostReadAuthor.slug}/`)}
+                class="group rounded-xl border border-rule bg-surface p-4 transition-colors hover:border-leather"
+              >
+                <p class="text-sm text-ink-soft">En çok okunan yazar</p>
+                <p class="mt-1 font-serif text-base text-ink group-hover:text-leather line-clamp-2">
+                  {stats.mostReadAuthor.name}
+                </p>
+                <p class="text-sm text-ink-soft">{stats.mostReadAuthor.count} kitap</p>
+              </a>
+            )}
+          </div>
+        </>
+      )
+    }
+
+    <!-- En'ler -->
+    <h2 class="mt-10 font-serif text-lg text-ink">En'ler</h2>
+    <p class="mt-1 text-sm text-ink-soft">
+      Eşit değerlerde en son bitirilen kitap önce gösterilir.
+    </p>
+    <div class="mt-4 grid gap-6 sm:grid-cols-3">
       <div>
-        <h2 class="font-serif text-lg text-ink">En yüksek puanlılar</h2>
+        <h3 class="font-serif text-base text-ink">En yüksek puanlılar</h3>
         <ul class="mt-3 flex flex-col gap-2">
           {
-            stats.topRated.map((book) => (
+            stats.topRated.items.map((book) => (
               <li>
                 <a href={withBase(`/kitaplar/${book.id}/`)} class="text-sm text-ink-soft hover:text-leather">
                   {book.data.title} ({book.data.rating}/10)
@@ -82,12 +179,17 @@ const summaryCards = [
             ))
           }
         </ul>
+        {stats.topRated.hasMore && (
+          <a href={withBase("/kitaplar/")} class="mt-2 inline-block text-xs text-ink-soft hover:text-leather">
+            +{stats.topRated.totalCount - stats.topRated.items.length} kitap daha — tümünü gör
+          </a>
+        )}
       </div>
       <div>
-        <h2 class="font-serif text-lg text-ink">En çok alıntılananlar</h2>
+        <h3 class="font-serif text-base text-ink">En çok alıntılananlar</h3>
         <ul class="mt-3 flex flex-col gap-2">
           {
-            stats.mostQuoted.map((book) => (
+            stats.mostQuoted.items.map((book) => (
               <li>
                 <a href={withBase(`/kitaplar/${book.id}/`)} class="text-sm text-ink-soft hover:text-leather">
                   {book.data.title} ({book.data.quotes.length})
@@ -96,12 +198,17 @@ const summaryCards = [
             ))
           }
         </ul>
+        {stats.mostQuoted.hasMore && (
+          <a href={withBase("/alintilar/")} class="mt-2 inline-block text-xs text-ink-soft hover:text-leather">
+            +{stats.mostQuoted.totalCount - stats.mostQuoted.items.length} kitap daha — tümünü gör
+          </a>
+        )}
       </div>
       <div>
-        <h2 class="font-serif text-lg text-ink">En çok not alınanlar</h2>
+        <h3 class="font-serif text-base text-ink">En çok not alınanlar</h3>
         <ul class="mt-3 flex flex-col gap-2">
           {
-            stats.mostNoted.map((book) => (
+            stats.mostNoted.items.map((book) => (
               <li>
                 <a href={withBase(`/kitaplar/${book.id}/`)} class="text-sm text-ink-soft hover:text-leather">
                   {book.data.title} ({book.data.notes.length})
@@ -110,92 +217,105 @@ const summaryCards = [
             ))
           }
         </ul>
+        {stats.mostNoted.hasMore && (
+          <a href={withBase("/notlar/")} class="mt-2 inline-block text-xs text-ink-soft hover:text-leather">
+            +{stats.mostNoted.totalCount - stats.mostNoted.items.length} kitap daha — tümünü gör
+          </a>
+        )}
       </div>
     </div>
   </div>
 </BaseLayout>
 
-<script
-  define:vars={{
-    genreLabels,
-    genreValues,
-    ratingLabels,
-    ratingValues,
-    monthLabels,
-    monthValues,
-  }}
->
-  import("chart.js/auto").then(({ default: Chart }) => {
-    const styles = getComputedStyle(document.documentElement);
-    const cssVar = (name) => styles.getPropertyValue(name).trim() || "#999999";
-    const palette = [
-      cssVar("--color-leather"),
-      cssVar("--color-teal"),
-      cssVar("--color-gold"),
-      cssVar("--color-ink-soft"),
-      cssVar("--color-leather-soft"),
-      cssVar("--color-teal-soft"),
-      cssVar("--color-gold-soft"),
-    ];
-    const rule = cssVar("--color-rule");
+<!-- Chart.js'e aktarılacak veriler: derleme anında hesaplanıp JSON olarak
+     gömülür, ardından aşağıdaki GERÇEK (bundle edilen) modül betiği bunu okur. -->
+<script type="application/json" id="stats-payload" set:html={JSON.stringify(chartPayload)} />
 
-    Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
-    Chart.defaults.color = cssVar("--color-ink-soft");
+<script>
+  import Chart from "chart.js/auto";
 
-    const genreCanvas = document.getElementById("chart-genre");
-    if (genreCanvas && genreLabels.length) {
-      new Chart(genreCanvas, {
-        type: "doughnut",
-        data: {
-          labels: genreLabels,
-          datasets: [
-            {
-              data: genreValues,
-              backgroundColor: genreLabels.map((_, i) => palette[i % palette.length]),
-              borderColor: "transparent",
-            },
-          ],
-        },
-        options: {
-          plugins: { legend: { position: "bottom", labels: { boxWidth: 10 } } },
-        },
-      });
-    }
+  interface ChartPayload {
+    genreLabels: string[];
+    genreValues: number[];
+    ratingLabels: string[];
+    ratingValues: number[];
+    monthLabels: string[];
+    monthValues: number[];
+  }
 
-    const ratingCanvas = document.getElementById("chart-rating");
-    if (ratingCanvas) {
-      new Chart(ratingCanvas, {
-        type: "bar",
-        data: {
-          labels: ratingLabels,
-          datasets: [{ data: ratingValues, backgroundColor: cssVar("--color-leather") }],
-        },
-        options: {
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { display: false } },
-            y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: rule } },
+  const payloadEl = document.getElementById("stats-payload");
+  const payload: ChartPayload = JSON.parse(payloadEl?.textContent ?? "{}");
+  const { genreLabels, genreValues, ratingLabels, ratingValues, monthLabels, monthValues } = payload;
+
+  const styles = getComputedStyle(document.documentElement);
+  const cssVar = (name: string) => styles.getPropertyValue(name).trim() || "#999999";
+  const palette = [
+    cssVar("--color-leather"),
+    cssVar("--color-teal"),
+    cssVar("--color-gold"),
+    cssVar("--color-ink-soft"),
+    cssVar("--color-leather-soft"),
+    cssVar("--color-teal-soft"),
+    cssVar("--color-gold-soft"),
+  ];
+  const rule = cssVar("--color-rule");
+
+  Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+  Chart.defaults.color = cssVar("--color-ink-soft");
+
+  const genreCanvas = document.getElementById("chart-genre") as HTMLCanvasElement | null;
+  if (genreCanvas && genreLabels?.length) {
+    new Chart(genreCanvas, {
+      type: "doughnut",
+      data: {
+        labels: genreLabels,
+        datasets: [
+          {
+            data: genreValues,
+            backgroundColor: genreLabels.map((_, i) => palette[i % palette.length]),
+            borderColor: "transparent",
           },
-        },
-      });
-    }
+        ],
+      },
+      options: {
+        plugins: { legend: { position: "bottom", labels: { boxWidth: 10 } } },
+      },
+    });
+  }
 
-    const monthlyCanvas = document.getElementById("chart-monthly");
-    if (monthlyCanvas) {
-      new Chart(monthlyCanvas, {
-        type: "bar",
-        data: {
-          labels: monthLabels,
-          datasets: [{ data: monthValues, backgroundColor: cssVar("--color-teal") }],
+  const ratingCanvas = document.getElementById("chart-rating") as HTMLCanvasElement | null;
+  if (ratingCanvas) {
+    new Chart(ratingCanvas, {
+      type: "bar",
+      data: {
+        labels: ratingLabels,
+        datasets: [{ data: ratingValues, backgroundColor: cssVar("--color-leather") }],
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: rule } },
         },
-        options: {
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { display: false } },
-            y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: rule } },
-          },
+      },
+    });
+  }
+
+  const monthlyCanvas = document.getElementById("chart-monthly") as HTMLCanvasElement | null;
+  if (monthlyCanvas) {
+    new Chart(monthlyCanvas, {
+      type: "bar",
+      data: {
+        labels: monthLabels,
+        datasets: [{ data: monthValues, backgroundColor: cssVar("--color-teal") }],
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: rule } },
         },
-      });
-    }
-  });
+      },
+    });
+  }
 </script>

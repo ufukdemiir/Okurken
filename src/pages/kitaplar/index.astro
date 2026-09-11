@@ -35,6 +35,8 @@ const statuses = ["all", "reading", "completed", "want-to-read", "dropped"] as c
         ))
       }
     </div>
+
+    <div id="pagination"></div>
   </div>
 </BaseLayout>
 
@@ -54,17 +56,29 @@ const statuses = ["all", "reading", "completed", "want-to-read", "dropped"] as c
 </style>
 
 <script>
+  import { createPager } from "../../lib/pagination-client";
+
   const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>("#status-filters [data-status]"));
   const items = Array.from(document.querySelectorAll<HTMLElement>("#book-grid [data-status]"));
+  const paginationEl = document.getElementById("pagination");
+
+  let activeStatus = "all";
+
+  const pager = paginationEl
+    ? createPager({
+        items,
+        container: paginationEl,
+        pageSize: 12,
+        isEligible: (item) => activeStatus === "all" || item.dataset.status === activeStatus,
+        onPageChange: () => paginationEl.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+      })
+    : null;
 
   buttons.forEach((button) => {
     button.addEventListener("click", () => {
-      const status = button.dataset.status;
+      activeStatus = button.dataset.status ?? "all";
       buttons.forEach((b) => b.classList.toggle("is-active", b === button));
-      items.forEach((item) => {
-        const show = status === "all" || item.dataset.status === status;
-        item.style.display = show ? "" : "none";
-      });
+      pager?.reset();
     });
   });
 </script>
