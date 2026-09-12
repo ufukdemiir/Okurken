@@ -128,8 +128,8 @@ const structuredData = {
         </a>
         {publisher && <p class="mt-1 text-sm text-ink-soft">{publisher}</p>}
 
-        <dl class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink-soft">
-          <div class="flex items-center gap-1.5">
+        <dl class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-soft">
+          <div>
             <dt class="sr-only">Durum</dt>
             <dd><StatusBadge status={status} /></dd>
           </div>
@@ -162,7 +162,14 @@ const structuredData = {
         {genres.length > 0 && (
           <ul class="mt-4 flex flex-wrap gap-2">
             {genres.map((genre) => (
-              <li class="rounded-full border border-rule px-3 py-1 text-xs text-ink-soft">{genre}</li>
+              <li>
+                <a
+                  href={withBase(`/kitaplar/?tur=${encodeURIComponent(genre)}`)}
+                  class="block rounded-full border border-rule px-3 py-1 text-xs text-ink-soft transition-colors hover:border-leather hover:text-leather"
+                >
+                  {genre}
+                </a>
+              </li>
             ))}
           </ul>
         )}

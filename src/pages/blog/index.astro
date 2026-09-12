@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ShareButtons from "../../components/ShareButtons.astro";
-import { getPublishedPosts } from "../../lib/blog";
+import { getPublishedPosts, getAllTags } from "../../lib/blog";
 import { withBase } from "../../lib/url";
 import { estimateReadingMinutes, excerptFromMarkdown, formatDateTR } from "../../lib/reading";
 
@@ -12,6 +12,7 @@ const items = posts.map((post) => ({
   minutes: estimateReadingMinutes(post.body ?? ""),
 }));
 const totalMinutes = items.reduce((sum, i) => sum + i.minutes, 0);
+const tags = await getAllTags();
 ---
 
 <BaseLayout
@@ -24,6 +25,26 @@ const totalMinutes = items.reduce((sum, i) => sum + i.minutes, 0);
       Toplam {items.length} yazı, {totalMinutes} dakikalık okuma içeriği.
     </p>
 
+    {
+      tags.length > 0 && (
+        <details class="tag-filter mt-5 rounded-lg border border-rule">
+          <summary class="cursor-pointer list-none px-4 py-2.5 text-sm text-ink-soft [&::-webkit-details-marker]:hidden">
+            Etikete göre filtrele
+          </summary>
+          <div class="flex flex-wrap gap-2 border-t border-rule px-4 py-3" id="tag-filters">
+            <button type="button" data-tag="all" class="tag-filter-chip is-active">
+              Tümü
+            </button>
+            {tags.map((tag) => (
+              <button type="button" data-tag={tag} class="tag-filter-chip">
+                {tag}
+              </button>
+            ))}
+          </div>
+        </details>
+      )
+    }
+
     {items.length === 0 && <p class="mt-8 text-ink-soft">Henüz bir yazı yok.</p>}
 
     <ul id="blog-list" class="mt-8 flex flex-col divide-y divide-rule">
@@ -32,7 +53,7 @@ const totalMinutes = items.reduce((sum, i) => sum + i.minutes, 0);
           const relativeUrl = `/blog/${post.id}/`;
           const absoluteUrl = new URL(withBase(relativeUrl), Astro.site).toString();
           return (
-            <li class="py-8 first:pt-0">
+            <li data-tags={post.data.tags.join("|")} class="py-8 first:pt-0">
               <a href={withBase(relativeUrl)} class="group block">
                 <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                   <h2 class="font-serif text-xl text-ink group-hover:text-leather">{post.data.title}</h2>
@@ -53,21 +74,58 @@ const totalMinutes = items.reduce((sum, i) => sum + i.minutes, 0);
       }
     </ul>
 
+    <p id="no-results" class="mt-8 hidden text-ink-soft">Bu etikete uyan yazı bulunamadı.</p>
+
     <div id="pagination"></div>
   </div>
 </BaseLayout>
 
+<style>
+  .tag-filter-chip {
+    border-radius: 999px;
+    border: 1px solid var(--color-rule);
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8125rem;
+    color: var(--color-ink-soft);
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .tag-filter-chip.is-active {
+    border-color: var(--color-leather);
+    color: var(--color-leather);
+  }
+</style>
+
 <script>
   import { createPager } from "../../lib/pagination-client";
 
+  const tagButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("#tag-filters [data-tag]"));
   const items = Array.from(document.querySelectorAll<HTMLLIElement>("#blog-list > li"));
   const paginationEl = document.getElementById("pagination");
-  if (paginationEl) {
-    createPager({
-      items,
-      container: paginationEl,
-      pageSize: 10,
-      onPageChange: () => paginationEl.scrollIntoView({ behavior: "smooth", block: "nearest" }),
-    });
+  const noResultsEl = document.getElementById("no-results");
+
+  let activeTag = "all";
+
+  function updateNoResults() {
+    const anyVisible = items.some((item) => item.style.display !== "none");
+    noResultsEl?.classList.toggle("hidden", anyVisible);
   }
+
+  const pager = paginationEl
+    ? createPager({
+        items,
+        container: paginationEl,
+        pageSize: 10,
+        isEligible: (item) => activeTag === "all" || (item.dataset.tags ?? "").split("|").includes(activeTag),
+        onPageChange: () => paginationEl.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+        afterRender: updateNoResults,
+      })
+    : null;
+
+  tagButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      activeTag = button.dataset.tag ?? "all";
+      tagButtons.forEach((b) => b.classList.toggle("is-active", b === button));
+      pager?.reset();
+    });
+  });
 </script>

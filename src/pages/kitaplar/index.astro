@@ -176,4 +176,16 @@ const letters = await getAllTitleLetters();
   bindGroup(statusButtons, (v) => (activeStatus = v), "status");
   bindGroup(genreButtons, (v) => (activeGenre = v), "genre");
   bindGroup(letterButtons, (v) => (activeLetter = v), "letter");
+
+  // Bir kitap sayfasındaki tür etiketine tıklandığında ("?tur=Roman") bu
+  // sayfa doğrudan o türe filtrelenmiş şekilde açılır.
+  const requestedGenre = new URLSearchParams(window.location.search).get("tur");
+  if (requestedGenre) {
+    const matchingButton = genreButtons.find((b) => b.dataset.genre === requestedGenre);
+    if (matchingButton) {
+      activeGenre = requestedGenre;
+      genreButtons.forEach((b) => b.classList.toggle("is-active", b === matchingButton));
+      pager?.reset();
+    }
+  }
 </script>
