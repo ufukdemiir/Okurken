@@ -1,5 +1,5 @@
 import { getCollection, type CollectionEntry } from "astro:content";
-import { turkishSlugify, turkishCompare } from "./slugify";
+import { turkishSlugify, turkishCompare, getFirstLetter } from "./slugify";
 import { roundTo } from "./reading";
 
 export type BookEntry = CollectionEntry<"books">;
@@ -68,6 +68,14 @@ export async function getAllGenres(): Promise<string[]> {
   const books = await getPublishedBooks();
   const set = new Set<string>();
   books.forEach((b) => b.data.genres.forEach((g) => set.add(g)));
+  return [...set].sort((a, b) => turkishCompare(a, b));
+}
+
+/** Kitap başlıklarının ilk harflerinden oluşan, alfabetik sıralı benzersiz liste. */
+export async function getAllTitleLetters(): Promise<string[]> {
+  const books = await getPublishedBooks();
+  const set = new Set<string>();
+  books.forEach((b) => set.add(getFirstLetter(b.data.title)));
   return [...set].sort((a, b) => turkishCompare(a, b));
 }
 

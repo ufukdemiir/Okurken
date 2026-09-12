@@ -8,6 +8,25 @@ import { withBase } from "../lib/url";
 const stats = await computeStats();
 const totalBlogPosts = (await getPublishedPosts()).length;
 
+// Sitenin tüm istatistik grafiklerinde kullanılan TEK renk kaynağı — hepsi
+// aynı aileden olduğu için grafikler birbirinden alakasız durmuyor.
+const CHART_PALETTE = [
+  "#6E3B22", // deri kahvesi
+  "#223752", // lacivert
+  "#A67C1E", // hardal
+  "#2F4A3A", // koyu yeşil
+  "#7A2E2E", // bordo
+  "#5B3868", // mor
+  "#3D5A6C", // çelik mavisi
+  "#A65A2E", // tarçın
+];
+
+const genreDistributionWithColor = stats.genreDistribution.map((g, i) => ({
+  ...g,
+  color: CHART_PALETTE[i % CHART_PALETTE.length],
+}));
+const topGenre = stats.genreDistribution[0] ?? null;
+
 const summaryCards = [
   { label: "Toplam kitap", value: String(stats.totalBooks) },
   { label: "Okunan sayfa", value: stats.totalPagesRead.toLocaleString("tr-TR") },
@@ -66,12 +85,16 @@ const highlights = [
 const chartPayload = {
   genreLabels: stats.genreDistribution.map((g) => g.genre),
   genreValues: stats.genreDistribution.map((g) => g.count),
+  genreColors: genreDistributionWithColor.map((g) => g.color),
   ratingLabels: stats.ratingHistogram.map((r) => String(r.rating)),
   ratingValues: stats.ratingHistogram.map((r) => r.count),
   monthLabels: stats.booksPerMonth.map((m) => m.label),
   monthValues: stats.booksPerMonth.map((m) => m.count),
   yearLabels: stats.booksPerYear.map((y) => y.label),
   yearValues: stats.booksPerYear.map((y) => y.count),
+  ratingColor: CHART_PALETTE[0],
+  monthColor: CHART_PALETTE[6],
+  yearColor: CHART_PALETTE[2],
 };
 ---
 
@@ -109,7 +132,7 @@ const chartPayload = {
     <!-- Durum + tür/puan/aylık grafikleri -->
     <div class="mt-10 grid gap-4 sm:grid-cols-2">
       <div class="rounded-xl border border-rule bg-surface p-4">
-        <p class="mb-2 text-sm text-ink-soft">Durum dağılımı</p>
+        <p class="mb-3 text-sm font-semibold text-ink">Durum dağılımı</p>
         <div>
           {
             Object.entries(stats.statusCounts).map(([status, count]) => (
@@ -120,7 +143,7 @@ const chartPayload = {
             ))
           }
         </div>
-        <p class="mb-2 mt-4 border-t border-dashed border-rule pt-4 text-sm text-ink-soft">İçerik</p>
+        <p class="mb-3 mt-4 border-t border-dashed border-rule pt-4 text-sm font-semibold text-ink">İçerik</p>
         <div>
           <div class="flex items-center justify-between border-b border-rule py-2 text-sm">
             <span class="text-ink-soft">Alıntı</span>
@@ -141,24 +164,41 @@ const chartPayload = {
         </div>
       </div>
       <div class="rounded-xl border border-rule bg-surface p-4">
-        <p class="mb-2 text-sm text-ink-soft">Tür dağılımı</p>
+        <p class="mb-3 text-sm font-semibold text-ink">Tür dağılımı</p>
         <canvas id="chart-genre" height="220" role="img" aria-label="Tür dağılımı grafiği"></canvas>
+        {
+          genreDistributionWithColor.length > 0 && (
+            <ul class="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-t border-rule pt-4">
+              {genreDistributionWithColor.map((g) => (
+                <li class="flex items-center gap-2 text-sm">
+                  <span
+                    class="size-2.5 shrink-0 rounded-full"
+                    style={`background-color:${g.color}`}
+                    aria-hidden="true"
+                  />
+                  <span class="text-ink-soft">{g.genre}</span>
+                  <span class="text-ink-soft/70">{g.count}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
       </div>
     </div>
 
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="rounded-xl border border-rule bg-surface p-4">
-        <p class="mb-2 text-sm text-ink-soft">Puan dağılımı (1-10)</p>
+        <p class="mb-3 text-sm font-semibold text-ink">Puan dağılımı (1-10)</p>
         <canvas id="chart-rating" height="220" role="img" aria-label="Puan dağılımı grafiği"></canvas>
       </div>
       <div class="rounded-xl border border-rule bg-surface p-4">
-        <p class="mb-2 text-sm text-ink-soft">Aylık bitirilen kitap sayısı</p>
+        <p class="mb-3 text-sm font-semibold text-ink">Aylık bitirilen kitap sayısı</p>
         <canvas id="chart-monthly" height="220" role="img" aria-label="Aylık okuma grafiği"></canvas>
       </div>
     </div>
 
     <div class="mt-4 rounded-xl border border-rule bg-surface p-4">
-      <p class="mb-2 text-sm text-ink-soft">Yıllara göre bitirilen kitap sayısı</p>
+      <p class="mb-3 text-sm font-semibold text-ink">Yıllara göre bitirilen kitap sayısı</p>
       <canvas id="chart-yearly" height="120" role="img" aria-label="Yıllara göre okuma grafiği"></canvas>
     </div>
 
@@ -190,6 +230,18 @@ const chartPayload = {
                   {stats.mostReadAuthor.name}
                 </p>
                 <p class="text-sm text-ink-soft">{stats.mostReadAuthor.count} kitap</p>
+              </a>
+            )}
+            {topGenre && (
+              <a
+                href={withBase("/kitaplar/")}
+                class="group rounded-xl border border-rule bg-surface p-4 transition-colors hover:border-leather"
+              >
+                <p class="text-sm text-ink-soft">En popüler tür</p>
+                <p class="mt-1 font-serif text-base text-ink group-hover:text-leather line-clamp-2">
+                  {topGenre.genre}
+                </p>
+                <p class="text-sm text-ink-soft">{topGenre.count} kitap</p>
               </a>
             )}
           </div>
@@ -274,12 +326,16 @@ const chartPayload = {
   interface ChartPayload {
     genreLabels: string[];
     genreValues: number[];
+    genreColors: string[];
     ratingLabels: string[];
     ratingValues: number[];
     monthLabels: string[];
     monthValues: number[];
     yearLabels: string[];
     yearValues: number[];
+    ratingColor: string;
+    monthColor: string;
+    yearColor: string;
   }
 
   const payloadEl = document.getElementById("stats-payload");
@@ -287,29 +343,20 @@ const chartPayload = {
   const {
     genreLabels,
     genreValues,
+    genreColors,
     ratingLabels,
     ratingValues,
     monthLabels,
     monthValues,
     yearLabels,
     yearValues,
+    ratingColor,
+    monthColor,
+    yearColor,
   } = payload;
 
   const styles = getComputedStyle(document.documentElement);
   const cssVar = (name: string) => styles.getPropertyValue(name).trim() || "#999999";
-  // Tür dağılımı grafiği için özel olarak seçilmiş, birbirinden kolay
-  // ayırt edilebilen palet (aynı tonun açık/koyu varyantları yerine
-  // farklı renk ailelerinden, temaya uygun, cilt kumaşı esintili tonlar).
-  const genrePalette = [
-    "#6E3B22", // deri kahvesi
-    "#223752", // lacivert
-    "#A67C1E", // hardal
-    "#2F4A3A", // koyu yeşil
-    "#7A2E2E", // bordo
-    "#5B3868", // mor
-    "#3D5A6C", // çelik mavisi
-    "#A65A2E", // tarçın
-  ];
   const rule = cssVar("--color-rule");
 
   Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
@@ -324,13 +371,15 @@ const chartPayload = {
         datasets: [
           {
             data: genreValues,
-            backgroundColor: genreLabels.map((_, i) => genrePalette[i % genrePalette.length]),
+            backgroundColor: genreColors,
             borderColor: "transparent",
           },
         ],
       },
       options: {
-        plugins: { legend: { position: "bottom", labels: { boxWidth: 10 } } },
+        // Kendi açıklamamızı (renk + tür adı + sayı) grafiğin altında ayrı
+        // bir listede gösteriyoruz; Chart.js'in dahili legend'ı kapalı.
+        plugins: { legend: { display: false } },
       },
     });
   }
@@ -341,7 +390,7 @@ const chartPayload = {
       type: "bar",
       data: {
         labels: ratingLabels,
-        datasets: [{ data: ratingValues, backgroundColor: cssVar("--color-leather") }],
+        datasets: [{ data: ratingValues, backgroundColor: ratingColor }],
       },
       options: {
         plugins: { legend: { display: false } },
@@ -359,7 +408,7 @@ const chartPayload = {
       type: "bar",
       data: {
         labels: monthLabels,
-        datasets: [{ data: monthValues, backgroundColor: cssVar("--color-teal") }],
+        datasets: [{ data: monthValues, backgroundColor: monthColor }],
       },
       options: {
         plugins: { legend: { display: false } },
@@ -377,7 +426,7 @@ const chartPayload = {
       type: "bar",
       data: {
         labels: yearLabels,
-        datasets: [{ data: yearValues, backgroundColor: cssVar("--color-gold") }],
+        datasets: [{ data: yearValues, backgroundColor: yearColor }],
       },
       options: {
         indexAxis: "y",

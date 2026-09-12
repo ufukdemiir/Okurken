@@ -1,10 +1,19 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import BookCard from "../../components/BookCard.astro";
-import { getPublishedBooks, compareByStatusThenRecency, STATUS_LABELS_TR } from "../../lib/books";
+import {
+  getPublishedBooks,
+  compareByStatusThenRecency,
+  STATUS_LABELS_TR,
+  getAllGenres,
+  getAllTitleLetters,
+} from "../../lib/books";
+import { getFirstLetter } from "../../lib/slugify";
 
 const books = (await getPublishedBooks()).sort(compareByStatusThenRecency);
 const statuses = ["all", "reading", "completed", "want-to-read", "dropped"] as const;
+const genres = await getAllGenres();
+const letters = await getAllTitleLetters();
 ---
 
 <BaseLayout title="Kitaplar" description="Okunan, okunmakta olan ve okunacak tüm kitapların listesi.">
@@ -12,29 +21,74 @@ const statuses = ["all", "reading", "completed", "want-to-read", "dropped"] as c
     <h1 class="font-serif text-3xl text-ink">Kitaplar</h1>
     <p class="mt-2 text-ink-soft">Toplam {books.length} kitap.</p>
 
-    <div class="mt-6 flex flex-wrap gap-2" id="status-filters">
-      {
-        statuses.map((s) => (
-          <button
-            type="button"
-            data-status={s}
-            class:list={["book-filter-chip", s === "all" && "is-active"]}
-          >
-            {s === "all" ? "Tümü" : STATUS_LABELS_TR[s]}
-          </button>
-        ))
-      }
+    <div class="mt-6">
+      <p class="mb-2 text-xs font-semibold text-ink-soft">Duruma göre</p>
+      <div class="flex flex-wrap gap-2" id="status-filters">
+        {
+          statuses.map((s) => (
+            <button
+              type="button"
+              data-status={s}
+              class:list={["book-filter-chip", s === "all" && "is-active"]}
+            >
+              {s === "all" ? "Tümü" : STATUS_LABELS_TR[s]}
+            </button>
+          ))
+        }
+      </div>
     </div>
+
+    {
+      genres.length > 0 && (
+        <div class="mt-4">
+          <p class="mb-2 text-xs font-semibold text-ink-soft">Türe göre</p>
+          <div class="flex flex-wrap gap-2" id="genre-filters">
+            <button type="button" data-genre="all" class="book-filter-chip is-active">
+              Tümü
+            </button>
+            {genres.map((genre) => (
+              <button type="button" data-genre={genre} class="book-filter-chip">
+                {genre}
+              </button>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    {
+      letters.length > 1 && (
+        <div class="mt-4">
+          <p class="mb-2 text-xs font-semibold text-ink-soft">Harfe göre</p>
+          <div class="flex flex-wrap gap-1.5" id="letter-filters">
+            <button type="button" data-letter="all" class="letter-chip is-active">
+              Tümü
+            </button>
+            {letters.map((letter) => (
+              <button type="button" data-letter={letter} class="letter-chip">
+                {letter}
+              </button>
+            ))}
+          </div>
+        </div>
+      )
+    }
 
     <div id="book-grid" class="mt-6 grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4">
       {
         books.map((book) => (
-          <div data-status={book.data.status}>
+          <div
+            data-status={book.data.status}
+            data-genres={book.data.genres.join("|")}
+            data-letter={getFirstLetter(book.data.title)}
+          >
             <BookCard book={book} />
           </div>
         ))
       }
     </div>
+
+    <p id="no-results" class="mt-8 hidden text-ink-soft">Bu filtrelere uyan kitap bulunamadı.</p>
 
     <div id="pagination"></div>
   </div>
@@ -53,32 +107,73 @@ const statuses = ["all", "reading", "completed", "want-to-read", "dropped"] as c
     border-color: var(--color-leather);
     color: var(--color-leather);
   }
+  .letter-chip {
+    display: grid;
+    place-items: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-rule);
+    font-size: 0.8125rem;
+    color: var(--color-ink-soft);
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .letter-chip.is-active {
+    border-color: var(--color-leather);
+    color: var(--color-leather);
+  }
 </style>
 
 <script>
   import { createPager } from "../../lib/pagination-client";
 
-  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>("#status-filters [data-status]"));
-  const items = Array.from(document.querySelectorAll<HTMLElement>("#book-grid [data-status]"));
+  const statusButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("#status-filters [data-status]"));
+  const genreButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("#genre-filters [data-genre]"));
+  const letterButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("#letter-filters [data-letter]"));
+  const items = Array.from(document.querySelectorAll<HTMLElement>("#book-grid > [data-status]"));
   const paginationEl = document.getElementById("pagination");
+  const noResultsEl = document.getElementById("no-results");
 
   let activeStatus = "all";
+  let activeGenre = "all";
+  let activeLetter = "all";
+
+  function isEligible(item: HTMLElement): boolean {
+    const statusMatch = activeStatus === "all" || item.dataset.status === activeStatus;
+    const genreMatch =
+      activeGenre === "all" || (item.dataset.genres ?? "").split("|").includes(activeGenre);
+    const letterMatch = activeLetter === "all" || item.dataset.letter === activeLetter;
+    return statusMatch && genreMatch && letterMatch;
+  }
+
+  function updateNoResults() {
+    const anyVisible = items.some((item) => item.style.display !== "none");
+    noResultsEl?.classList.toggle("hidden", anyVisible);
+  }
 
   const pager = paginationEl
     ? createPager({
         items,
         container: paginationEl,
         pageSize: 12,
-        isEligible: (item) => activeStatus === "all" || item.dataset.status === activeStatus,
+        isEligible,
         onPageChange: () => paginationEl.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+        afterRender: updateNoResults,
       })
     : null;
 
-  buttons.forEach((button) => {
-    button.addEventListener("click", () => {
-      activeStatus = button.dataset.status ?? "all";
-      buttons.forEach((b) => b.classList.toggle("is-active", b === button));
-      pager?.reset();
+  function bindGroup(buttons: HTMLButtonElement[], setActive: (value: string) => void, dataKey: string) {
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        setActive(button.dataset[dataKey] ?? "all");
+        buttons.forEach((b) => b.classList.toggle("is-active", b === button));
+        pager?.reset();
+      });
     });
-  });
+  }
+
+  bindGroup(statusButtons, (v) => (activeStatus = v), "status");
+  bindGroup(genreButtons, (v) => (activeGenre = v), "genre");
+  bindGroup(letterButtons, (v) => (activeLetter = v), "letter");
 </script>

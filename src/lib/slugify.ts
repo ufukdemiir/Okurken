@@ -38,3 +38,16 @@ export function turkishSlugify(input: string): string {
 export function turkishCompare(a: string, b: string): number {
   return a.localeCompare(b, "tr-TR", { sensitivity: "base" });
 }
+
+/**
+ * Bir metnin ilk harfini, Türkçe kurallarına göre büyük harfe çevirerek
+ * döndürür (ör. "İnce Memed" → "İ", "işletim" → "İ"). Kitap başlıkları ve
+ * yazar adlarında harfe göre filtreleme için kullanılır. Yabancı dildeki
+ * başlıklar/isimler de (Latin alfabesi kullandıkları sürece) sorunsuz çalışır.
+ */
+export function getFirstLetter(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return "#";
+  const first = trimmed.charAt(0).toLocaleUpperCase("tr-TR");
+  return /[A-ZÇĞİÖŞÜ]/.test(first) ? first : "#";
+}

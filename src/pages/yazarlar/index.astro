@@ -1,9 +1,11 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getAllAuthors } from "../../lib/books";
+import { getFirstLetter, turkishCompare } from "../../lib/slugify";
 import { withBase } from "../../lib/url";
 
 const authors = await getAllAuthors();
+const letters = [...new Set(authors.map((a) => getFirstLetter(a.name)))].sort((a, b) => turkishCompare(a, b));
 ---
 
 <BaseLayout title="Yazarlar" description="Okunan yazarların listesi ve yazar bazlı puan ortalamaları.">
@@ -11,10 +13,25 @@ const authors = await getAllAuthors();
     <h1 class="font-serif text-3xl text-ink">Yazarlar</h1>
     <p class="mt-2 text-ink-soft">Şimdiye kadar {authors.length} farklı yazardan kitap okundu.</p>
 
+    {
+      letters.length > 1 && (
+        <div class="mt-6 flex flex-wrap gap-1.5" id="letter-filters">
+          <button type="button" data-letter="all" class="letter-chip is-active">
+            Tümü
+          </button>
+          {letters.map((letter) => (
+            <button type="button" data-letter={letter} class="letter-chip">
+              {letter}
+            </button>
+          ))}
+        </div>
+      )
+    }
+
     <ul id="author-list" class="mt-8 flex flex-col divide-y divide-rule">
       {
         authors.map((author) => (
-          <li>
+          <li data-letter={getFirstLetter(author.name)}>
             <a
               href={withBase(`/yazarlar/${author.slug}/`)}
               class="group flex items-center justify-between gap-4 py-4"
@@ -32,21 +49,62 @@ const authors = await getAllAuthors();
       }
     </ul>
 
+    <p id="no-results" class="mt-8 hidden text-ink-soft">Bu harfle başlayan yazar bulunamadı.</p>
+
     <div id="pagination"></div>
   </div>
 </BaseLayout>
 
+<style>
+  .letter-chip {
+    display: grid;
+    place-items: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-rule);
+    font-size: 0.8125rem;
+    color: var(--color-ink-soft);
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .letter-chip.is-active {
+    border-color: var(--color-leather);
+    color: var(--color-leather);
+  }
+</style>
+
 <script>
   import { createPager } from "../../lib/pagination-client";
 
+  const letterButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("#letter-filters [data-letter]"));
   const items = Array.from(document.querySelectorAll<HTMLLIElement>("#author-list > li"));
   const paginationEl = document.getElementById("pagination");
-  if (paginationEl) {
-    createPager({
-      items,
-      container: paginationEl,
-      pageSize: 20,
-      onPageChange: () => paginationEl.scrollIntoView({ behavior: "smooth", block: "nearest" }),
-    });
+  const noResultsEl = document.getElementById("no-results");
+
+  let activeLetter = "all";
+
+  function updateNoResults() {
+    const anyVisible = items.some((item) => item.style.display !== "none");
+    noResultsEl?.classList.toggle("hidden", anyVisible);
   }
+
+  const pager = paginationEl
+    ? createPager({
+        items,
+        container: paginationEl,
+        pageSize: 20,
+        isEligible: (item) => activeLetter === "all" || item.dataset.letter === activeLetter,
+        onPageChange: () => paginationEl.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+        afterRender: updateNoResults,
+      })
+    : null;
+
+  letterButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      activeLetter = button.dataset.letter ?? "all";
+      letterButtons.forEach((b) => b.classList.toggle("is-active", b === button));
+      pager?.reset();
+    });
+  });
 </script>

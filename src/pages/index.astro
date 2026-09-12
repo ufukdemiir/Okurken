@@ -26,26 +26,20 @@ const recentlyFinished = await getRecentlyFinished(8);
       <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 class="font-serif text-3xl text-ink">{readerName}</h1>
-          <p class="mt-1 text-ink-soft">{tagline}</p>
+          <p class="mt-1 italic text-ink-soft">{tagline}</p>
         </div>
 
         {
           hasSocialLinks && (
-            <div class="inline-flex divide-x divide-rule overflow-hidden rounded-full border border-rule">
+            <div class="inline-flex divide-x divide-rule overflow-hidden rounded-full border border-rule text-sm">
               {social?.github && (
                 <a
                   href={social.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="GitHub"
-                  class="flex size-9 items-center justify-center text-ink-soft transition-colors hover:bg-paper hover:text-leather"
+                  class="px-4 py-2 text-ink-soft transition-colors hover:bg-paper hover:text-leather"
                 >
-                  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="6" y1="3" x2="6" y2="15" />
-                    <circle cx="18" cy="6" r="3" />
-                    <circle cx="6" cy="18" r="3" />
-                    <path d="M18 9a9 9 0 0 1-9 9" />
-                  </svg>
+                  GitHub
                 </a>
               )}
               {social?.linkedin && (
@@ -53,10 +47,9 @@ const recentlyFinished = await getRecentlyFinished(8);
                   href={social.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="LinkedIn"
-                  class="flex size-9 items-center justify-center text-sm font-semibold text-ink-soft transition-colors hover:bg-paper hover:text-leather"
+                  class="px-4 py-2 text-ink-soft transition-colors hover:bg-paper hover:text-leather"
                 >
-                  in
+                  LinkedIn
                 </a>
               )}
               {social?.pinterest && (
@@ -64,13 +57,9 @@ const recentlyFinished = await getRecentlyFinished(8);
                   href={social.pinterest}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Pinterest"
-                  class="flex size-9 items-center justify-center text-ink-soft transition-colors hover:bg-paper hover:text-leather"
+                  class="px-4 py-2 text-ink-soft transition-colors hover:bg-paper hover:text-leather"
                 >
-                  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11Z" />
-                    <circle cx="12" cy="10" r="2.5" />
-                  </svg>
+                  Pinterest
                 </a>
               )}
             </div>
