@@ -18,6 +18,12 @@ const books = defineCollection({
     endDate: z.coerce.date().optional(),
     status: z.enum(["reading", "completed", "want-to-read", "dropped"]),
     rating: z.number().min(1).max(10).optional(),
+    // Yarım bırakılan ya da şu an okunmakta olan kitaplarda o ana kadar
+    // okunan gerçek sayfa sayısı. "Günde okunan ortalama sayfa" gibi
+    // istatistiklerin doğru hesaplanabilmesi için önemlidir — belirtilmezse
+    // (tamamlanmış kitaplar hariç) o kitaptan hiç sayfa okunmamış kabul
+    // edilir; kitabın TAM sayfa sayısı asla varsayılan olarak kullanılmaz.
+    pagesRead: z.number().int().nonnegative().optional(),
     genres: z.array(z.string()).default([]),
     // Her biri kısa bir Markdown parçası olabilen kişisel notlar.
     notes: z.array(z.string()).default([]),

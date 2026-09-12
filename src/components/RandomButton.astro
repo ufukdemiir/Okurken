@@ -1,8 +1,9 @@
 ---
 import { getPublishedBooks, getAllQuotes, getAllNotes, getBooksWithReviews } from "../lib/books";
+import { getPublishedPosts } from "../lib/blog";
 
 interface Props {
-  kind: "book" | "quote" | "review" | "note";
+  kind: "book" | "quote" | "review" | "note" | "blog";
   class?: string;
 }
 
@@ -13,6 +14,22 @@ const LABELS: Record<Props["kind"], string> = {
   quote: "Rastgele alıntı",
   review: "Rastgele inceleme",
   note: "Rastgele not",
+  blog: "Rastgele blog yazısı",
+};
+
+// Her buton için farklı, tamamen jenerik (telif sorunu olmayan) bir ikon.
+const ICON_PATHS: Record<Props["kind"], string> = {
+  // Açık kitap
+  book: '<path d="M3 5c2-1 5-1 7 1v12c-2-2-5-2-7-1V5Z"/><path d="M21 5c-2-1-5-1-7 1v12c2-2 5-2 7-1V5Z"/>',
+  // Tırnak işareti
+  quote:
+    '<path d="M7 8c-2 0-3.3 1.4-3.3 3.4S5 14.7 7 14.7c0 1.9-1 2.9-3 2.9"/><path d="M16.5 8c-2 0-3.3 1.4-3.3 3.4s1.3 3.3 3.3 3.3c0 1.9-1 2.9-3 2.9"/>',
+  // Yıldız
+  review: '<path d="m12 3 2.5 5.6 6.1.6-4.6 4.1 1.3 6-5.3-3.1-5.3 3.1 1.3-6-4.6-4.1 6.1-.6L12 3Z"/>',
+  // Yer imi / not
+  note: '<path d="M6 3h12v18l-6-4-6 4V3Z"/>',
+  // Makale/blog yazısı
+  blog: '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/>',
 };
 
 let pool: string[] = [];
@@ -37,6 +54,11 @@ switch (kind) {
     pool = notes.map((n) => `/kitaplar/${n.book.id}/#not-${n.index}`);
     break;
   }
+  case "blog": {
+    const posts = await getPublishedPosts();
+    pool = posts.map((p) => `/blog/${p.id}/`);
+    break;
+  }
 }
 ---
 
@@ -45,16 +67,18 @@ switch (kind) {
     <button
       type="button"
       data-random-pool={JSON.stringify(pool)}
-      class={`inline-flex items-center gap-2 rounded-full border border-rule px-4 py-2 text-sm text-ink-soft transition-colors hover:border-leather hover:text-leather ${className}`}
+      class={`inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-xs text-paper transition-opacity hover:opacity-85 ${className}`}
     >
-      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="4" y="4" width="16" height="16" rx="3" />
-        <circle cx="8.5" cy="8.5" r="1" fill="currentColor" stroke="none" />
-        <circle cx="15.5" cy="8.5" r="1" fill="currentColor" stroke="none" />
-        <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
-        <circle cx="8.5" cy="15.5" r="1" fill="currentColor" stroke="none" />
-        <circle cx="15.5" cy="15.5" r="1" fill="currentColor" stroke="none" />
-      </svg>
+      <svg
+        class="size-3.5 shrink-0"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        set:html={ICON_PATHS[kind]}
+      />
       {LABELS[kind]}
     </button>
   )

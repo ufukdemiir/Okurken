@@ -7,6 +7,7 @@ startDate: 2026-05-10
 endDate: 2026-05-15
 status: "dropped"
 rating: 4
+pagesRead: 123
 genres:
   - "Roman"
   - "Kişisel Gelişim"

@@ -124,6 +124,9 @@ const chartPayload = {
             <p class="text-sm text-ink-soft">{w.label}</p>
             <p class="mt-1 font-serif text-xl text-ink">{w.booksFinished} kitap</p>
             <p class="text-sm text-ink-soft">{w.pagesRead.toLocaleString("tr-TR")} sayfa</p>
+            <p class="mt-1 text-xs text-ink-soft/70">
+              Günde ortalama {w.averagePagesPerDay ?? 0} sayfa
+            </p>
           </div>
         ))
       }

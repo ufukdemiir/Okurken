@@ -74,6 +74,7 @@ const recentlyFinished = await getRecentlyFinished(8);
         <RandomButton kind="quote" />
         <RandomButton kind="review" />
         <RandomButton kind="note" />
+        <RandomButton kind="blog" />
       </div>
     </section>
 
@@ -119,11 +120,5 @@ const recentlyFinished = await getRecentlyFinished(8);
         </section>
       )
     }
-
-    <section class="mt-10 border-t border-rule pt-8">
-      <p class="text-sm text-ink-soft">
-        Kitaplar, alıntılar, incelemeler ve notların tamamını tek bir zaman akışında görmek için <a href={withBase("/arsiv/")} class="text-leather hover:underline">arşive</a> göz atabilirsiniz.
-      </p>
-    </section>
   </div>
 </BaseLayout>

@@ -6,6 +6,7 @@ export interface TimeWindowStat {
   label: string;
   booksFinished: number;
   pagesRead: number;
+  averagePagesPerDay: number | null;
 }
 
 export interface RankedList {
@@ -75,6 +76,29 @@ function rankBooks(
   };
 }
 
+/**
+ * Bir kitaptan GERÇEKTEN okunmuş sayfa sayısı — "kaç sayfa okudum"
+ * istatistiklerinin temelidir.
+ *
+ * - Tamamlanmış kitaplarda: `pagesRead` girilmişse o, girilmemişse kitabın
+ *   tam sayfa sayısı (bitirmek zaten tamamını okumak demektir).
+ * - Yarım bırakılmış kitaplarda: SADECE `pagesRead` alanı girilmişse o kadarı
+ *   sayılır; girilmemişse 0 kabul edilir. Kitabın tam sayfa sayısı ASLA
+ *   varsayılan olarak kullanılmaz — aksi hâlde bitirilmemiş bir kitabın
+ *   tamamı okunmuş gibi görünüp istatistikleri yanlış şişirir.
+ * - "Okunuyor" (henüz bitmemiş) ve "Okunacak" kitaplar bu hesaplara hiç
+ *   dahil edilmez; zira ne zaman okunduğu belirsiz bir "bitiş tarihi" yoktur.
+ */
+function actualPagesRead(book: BookEntry): number {
+  if (book.data.status === "completed") {
+    return book.data.pagesRead ?? book.data.pageCount ?? 0;
+  }
+  if (book.data.status === "dropped") {
+    return book.data.pagesRead ?? 0;
+  }
+  return 0;
+}
+
 export async function computeStats(referenceYear = new Date().getFullYear()): Promise<OkurkenStats> {
   const books = await getPublishedBooks();
   const now = new Date();
@@ -91,9 +115,11 @@ export async function computeStats(referenceYear = new Date().getFullYear()): Pr
   const pageCounts = completed
     .map((b) => b.data.pageCount)
     .filter((p): p is number => typeof p === "number");
-  const totalPagesRead = pageCounts.reduce((sum, p) => sum + p, 0);
+  // "Okunan sayfa" — tamamlanan kitapların tamamı + yarım bırakılanlardan
+  // gerçekten okunduğu belirtilen kısım (bkz. actualPagesRead).
+  const totalPagesRead = books.reduce((sum, b) => sum + actualPagesRead(b), 0);
   const averagePagesPerBook = pageCounts.length
-    ? Math.round(totalPagesRead / pageCounts.length)
+    ? Math.round(pageCounts.reduce((sum, p) => sum + p, 0) / pageCounts.length)
     : null;
 
   const durations = completed
@@ -150,21 +176,63 @@ export async function computeStats(referenceYear = new Date().getFullYear()): Pr
   });
 
   // --- Zaman dilimlerine göre özet (son 7 gün / bu ay / bu yıl / tüm zamanlar) ---
-  function windowStat(label: string, withinWindow: (d: Date) => boolean): TimeWindowStat {
-    const finishedInWindow = completed.filter((b) => b.data.endDate && withinWindow(b.data.endDate));
+  //
+  // Metodoloji (doğruluk önemli olduğu için ayrıntılı açıklanmıştır):
+  // 1) Payda (bölünecek gün sayısı) üç değerin EN KÜÇÜĞÜdür:
+  //    a) dönemin nominal uzunluğu (ör. "Bu ay" için o ayın toplam gün sayısı),
+  //    b) dönemin bugüne kadar GERÇEKTEN geçen kısmı (ör. ayın 12'sindeyseniz 12),
+  //    c) verilerin başladığı tarihten bugüne kadar geçen gün sayısı.
+  //    (c) olmadan, platformu yeni kullanmaya başlayan biri için "Bu yıl"
+  //    ortalaması, henüz hiç veri olmayan aylara bölünerek yapay şekilde
+  //    düşük çıkardı.
+  // 2) Pay (okunan sayfa) yalnızca TAMAMLANMIŞ veya YARIM BIRAKILMIŞ
+  //    kitaplardan, bitiş tarihi o dönemin içine düşenlerden gelir (bkz.
+  //    actualPagesRead). "Okunuyor" durumundaki kitaplar, henüz bir bitiş
+  //    tarihi olmadığından hiçbir zaman dilimine dahil edilmez.
+  const trackingDates = books
+    .flatMap((b) => [b.data.startDate, b.data.endDate])
+    .filter((d): d is Date => d instanceof Date);
+  const trackingStart = trackingDates.length
+    ? new Date(Math.min(...trackingDates.map((d) => d.getTime())))
+    : now;
+
+  function windowStat(label: string, periodStart: Date, periodEndNominal: Date): TimeWindowStat {
+    const relevant = books.filter(
+      (b) =>
+        (b.data.status === "completed" || b.data.status === "dropped") &&
+        b.data.endDate &&
+        b.data.endDate >= periodStart &&
+        b.data.endDate <= periodEndNominal,
+    );
+    const pagesReadInWindow = relevant.reduce((sum, b) => sum + actualPagesRead(b), 0);
+    const booksFinished = relevant.filter((b) => b.data.status === "completed").length;
+
+    const periodEndEffective = now < periodEndNominal ? now : periodEndNominal;
+    const nominalDays = daysBetween(periodStart, periodEndNominal) + 1;
+    const elapsedInPeriod = daysBetween(periodStart, periodEndEffective) + 1;
+    const elapsedSinceTracking = daysBetween(trackingStart, now) + 1;
+    const denominatorDays = Math.max(1, Math.min(nominalDays, elapsedInPeriod, elapsedSinceTracking));
+
     return {
       label,
-      booksFinished: finishedInWindow.length,
-      pagesRead: finishedInWindow.reduce((sum, b) => sum + (b.data.pageCount ?? 0), 0),
+      booksFinished,
+      pagesRead: pagesReadInWindow,
+      averagePagesPerDay: pagesReadInWindow > 0 ? Math.round((pagesReadInWindow / denominatorDays) * 10) / 10 : 0,
     };
   }
+
   const sevenDaysAgo = new Date(now);
-  sevenDaysAgo.setDate(now.getDate() - 7);
+  sevenDaysAgo.setDate(now.getDate() - 6); // bugün dahil, geriye dönük 7 gün
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const endOfYear = new Date(now.getFullYear(), 11, 31);
+
   const timeWindows: TimeWindowStat[] = [
-    windowStat("Son 7 gün", (d) => d >= sevenDaysAgo && d <= now),
-    windowStat("Bu ay", (d) => d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()),
-    windowStat("Bu yıl", (d) => d.getFullYear() === now.getFullYear()),
-    windowStat("Tüm zamanlar", () => true),
+    windowStat("Son 7 gün", sevenDaysAgo, now),
+    windowStat("Bu ay", startOfMonth, endOfMonth),
+    windowStat("Bu yıl", startOfYear, endOfYear),
+    windowStat("Tüm zamanlar", trackingStart, now),
   ];
 
   const topRated = rankBooks(books, (b) => b.data.rating ?? 0, 5);
