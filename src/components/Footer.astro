@@ -6,7 +6,9 @@ import ExportDataButton from "./ExportDataButton.astro";
 const settings = await getEntry("settings", "main");
 const social = settings?.data.social;
 const readerName = settings?.data.readerName ?? "Ufuk Demir";
-const year = new Date().getFullYear();
+const foundingYear = settings?.data.foundingYear ?? new Date().getFullYear();
+const currentYear = new Date().getFullYear();
+const yearLabel = currentYear > foundingYear ? `${foundingYear}–${currentYear}` : String(foundingYear);
 
 // GitHub/LinkedIn/Pinterest ana sayfadaki okur kartında buton olarak
 // gösteriliyor; burada yalnızca genel amaçlı bağlantılar kalıyor.
@@ -19,7 +21,7 @@ const links = [
 <footer class="border-t border-rule">
   <div class="mx-auto flex max-w-5xl flex-col gap-4 px-5 py-8 sm:flex-row sm:items-center sm:justify-between">
     <p class="font-serif text-sm text-ink-soft">
-      © {year} Okurken — {readerName}
+      © {yearLabel} Okurken — {readerName}. Tüm hakları saklıdır.
     </p>
 
     {

@@ -144,6 +144,13 @@ collections:
           - { label: "Kısa Slogan", name: "tagline", widget: "string" }
           - { label: "Biyografi", name: "bio", widget: "text" }
           - { label: "Site Açıklaması (SEO)", name: "siteDescription", widget: "text" }
+          - {
+              label: "Kuruluş Yılı",
+              name: "foundingYear",
+              widget: "number",
+              value_type: "int",
+              hint: "Sitenin ilk yayına alındığı yıl. Footer'daki telif hakkı satırında kullanılır, normalde bir daha değiştirmenize gerek kalmaz.",
+            }
           - { label: "Hedef Yılı", name: "goalYear", widget: "number", value_type: "int" }
           - { label: "Yıllık Okuma Hedefi (kitap)", name: "yearlyGoal", widget: "number", value_type: "int", min: 1 }
           - label: "Sosyal Bağlantılar"

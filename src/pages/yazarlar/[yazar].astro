@@ -2,6 +2,8 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import BookCard from "../../components/BookCard.astro";
 import { getAllAuthors } from "../../lib/books";
+import { withBase } from "../../lib/url";
+import { buildBreadcrumbList } from "../../lib/seo";
 
 export async function getStaticPaths() {
   const authors = await getAllAuthors();
@@ -15,12 +17,18 @@ const structuredData = {
   "@type": "Person",
   name: author.name,
 };
+
+const breadcrumbList = buildBreadcrumbList([
+  { name: "Okurken", url: new URL(withBase("/"), Astro.site).toString() },
+  { name: "Yazarlar", url: new URL(withBase("/yazarlar/"), Astro.site).toString() },
+  { name: author.name, url: new URL(Astro.url.pathname, Astro.site).toString() },
+]);
 ---
 
 <BaseLayout
   title={author.name}
   description={`${author.name} yazarının okunan kitapları${author.averageRating ? `, ortalama puan ${author.averageRating}/10` : ""}.`}
-  structuredData={structuredData}
+  structuredData={[structuredData, breadcrumbList]}
 >
   <div class="mx-auto max-w-5xl px-5 py-10">
     <h1 class="font-serif text-3xl text-ink">{author.name}</h1>

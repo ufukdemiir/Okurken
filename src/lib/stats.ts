@@ -52,6 +52,7 @@ export interface OkurkenStats {
   mostReadAuthor: AuthorHighlight | null;
   firstCompletedBook: BookEntry | null;
   mostRecentCompletedBook: BookEntry | null;
+  trackingStartYear: number;
 }
 
 /** Puana/sayıya göre sırala; eşitlik durumunda en son bitirileni öne al, ve
@@ -305,5 +306,6 @@ export async function computeStats(referenceYear = new Date().getFullYear()): Pr
     mostReadAuthor,
     firstCompletedBook,
     mostRecentCompletedBook,
+    trackingStartYear: trackingStart.getFullYear(),
   };
 }

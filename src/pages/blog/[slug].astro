@@ -5,6 +5,7 @@ import ShareButtons from "../../components/ShareButtons.astro";
 import { getPublishedPosts } from "../../lib/blog";
 import { withBase } from "../../lib/url";
 import { estimateReadingMinutes, excerptFromMarkdown, formatDateTR } from "../../lib/reading";
+import { buildBreadcrumbList } from "../../lib/seo";
 
 export async function getStaticPaths() {
   const posts = await getPublishedPosts();
@@ -31,9 +32,15 @@ const structuredData = {
   datePublished: publishDate.toISOString().slice(0, 10),
   ...(tags.length ? { keywords: tags.join(", ") } : {}),
 };
+
+const breadcrumbList = buildBreadcrumbList([
+  { name: "Okurken", url: new URL(withBase("/"), Astro.site).toString() },
+  { name: "Blog", url: new URL(withBase("/blog/"), Astro.site).toString() },
+  { name: title, url: pageUrl },
+]);
 ---
 
-<BaseLayout title={title} description={description} ogType="article" structuredData={structuredData}>
+<BaseLayout title={title} description={description} ogType="article" structuredData={[structuredData, breadcrumbList]}>
   <article class="mx-auto max-w-3xl px-5 py-10">
     <a href={withBase("/blog/")} class="text-sm text-ink-soft hover:text-leather">← Bloga dön</a>
 

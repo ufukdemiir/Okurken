@@ -9,6 +9,7 @@ import { getSpineColor } from "../../lib/spine";
 import { withBase } from "../../lib/url";
 import { turkishSlugify } from "../../lib/slugify";
 import { estimateReadingMinutes, formatDateTR } from "../../lib/reading";
+import { buildBreadcrumbList } from "../../lib/seo";
 
 export async function getStaticPaths() {
   const books = await getPublishedBooks();
@@ -86,13 +87,19 @@ const structuredData = {
       }
     : {}),
 };
+
+const breadcrumbList = buildBreadcrumbList([
+  { name: "Okurken", url: new URL(withBase("/"), Astro.site).toString() },
+  { name: "Kitaplar", url: new URL(withBase("/kitaplar/"), Astro.site).toString() },
+  { name: pageTitle, url: pageUrl },
+]);
 ---
 
 <BaseLayout
   title={pageTitle}
   description={`${author} tarafından yazılan "${pageTitle}" kitabına dair ${readerName}'in incelemesi, notları ve alıntıları.`}
   ogType="article"
-  structuredData={structuredData}
+  structuredData={[structuredData, breadcrumbList]}
 >
   <article class="mx-auto max-w-3xl px-5 py-10">
     <a href={withBase("/arsiv/")} class="text-sm text-ink-soft hover:text-leather">← Arşive dön</a>

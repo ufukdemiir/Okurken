@@ -22,8 +22,10 @@ const ICON_PATHS: Record<Props["kind"], string> = {
   // Açık kitap
   book: '<path d="M3 5c2-1 5-1 7 1v12c-2-2-5-2-7-1V5Z"/><path d="M21 5c-2-1-5-1-7 1v12c2-2 5-2 7-1V5Z"/>',
   // Tırnak işareti
+  // Tırnak işareti — gerçek tipografik karakter kullanılır (elle çizilmiş bir
+  // eğri yerine), böylece küçük boyutta da düzgün ve tanıdık görünür.
   quote:
-    '<path d="M7 8c-2 0-3.3 1.4-3.3 3.4S5 14.7 7 14.7c0 1.9-1 2.9-3 2.9"/><path d="M16.5 8c-2 0-3.3 1.4-3.3 3.4s1.3 3.3 3.3 3.3c0 1.9-1 2.9-3 2.9"/>',
+    '<text x="12" y="17.5" text-anchor="middle" font-size="19" font-family="Georgia, \'Times New Roman\', serif" fill="currentColor" stroke="none">\u201C</text>',
   // Yıldız
   review: '<path d="m12 3 2.5 5.6 6.1.6-4.6 4.1 1.3 6-5.3-3.1-5.3 3.1 1.3-6-4.6-4.1 6.1-.6L12 3Z"/>',
   // Yer imi / not

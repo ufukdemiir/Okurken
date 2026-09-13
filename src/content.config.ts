@@ -73,6 +73,9 @@ const settings = defineCollection({
     tagline: z.string(),
     bio: z.string(),
     siteDescription: z.string(),
+    // Sitenin ilk yayına alındığı yıl — footer'daki telif hakkı satırında
+    // "© 2026–2028" gibi bir aralık göstermek için kullanılır.
+    foundingYear: z.number().int(),
     goalYear: z.number().int(),
     yearlyGoal: z.number().int().positive(),
     social: z.object({
