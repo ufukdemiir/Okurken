@@ -19,32 +19,24 @@ const links = [
 ---
 
 <footer class="border-t border-rule">
-  <div class="mx-auto flex max-w-5xl flex-col gap-4 px-5 py-8 sm:flex-row sm:items-center sm:justify-between">
-    <p class="font-serif text-sm text-ink-soft">
-      © {yearLabel} Okurken — {readerName}. Tüm hakları saklıdır.
-    </p>
+  <div class="mx-auto flex max-w-3xl flex-col items-center gap-4 px-5 py-10 text-center">
+    <nav class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-ink-soft" aria-label="Site bağlantıları">
+      <a href={withBase("/admin/")} class="hover:text-leather">Yönetim paneli</a>
+      <ExportDataButton variant="link" />
+      {links.map((link) => (
+        <a
+          href={link.href}
+          target={link.href.startsWith("mailto:") ? undefined : "_blank"}
+          rel="noopener noreferrer"
+          class="transition-colors hover:text-leather"
+        >
+          {link.label}
+        </a>
+      ))}
+    </nav>
 
-    {
-      links.length > 0 && (
-        <nav class="flex flex-wrap gap-x-4 gap-y-1" aria-label="Sosyal bağlantılar">
-          {links.map((link) => (
-            <a
-              href={link.href}
-              target={link.href.startsWith("mailto:") ? undefined : "_blank"}
-              rel="noopener noreferrer"
-              class="text-sm text-ink-soft transition-colors hover:text-leather"
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
-      )
-    }
-  </div>
-  <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-5 pb-8">
-    <a href={withBase("/admin/")} class="text-xs text-ink-soft/70 hover:text-leather">
-      Yönetim paneli
-    </a>
-    <ExportDataButton variant="link" />
+    <p class="text-xs text-ink-soft/60">
+      © {yearLabel} Okurken, {readerName}. Tüm hakları saklıdır.
+    </p>
   </div>
 </footer>

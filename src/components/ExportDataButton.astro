@@ -26,7 +26,7 @@ const exportData = books.map((b) => ({
 const baseClass =
   variant === "button"
     ? "inline-flex items-center gap-2 rounded-full border border-rule px-4 py-2 text-sm text-ink-soft transition-colors hover:border-leather hover:text-leather"
-    : "inline-flex items-center gap-1 text-xs text-ink-soft/70 transition-colors hover:text-leather";
+    : "inline-flex items-center gap-1 text-sm text-ink-soft transition-colors hover:text-leather";
 ---
 
 <button type="button" data-export={JSON.stringify(exportData)} class={`${baseClass} ${className}`}>
