@@ -209,6 +209,44 @@ filtre arayüzü üzerinde tam kontrol sağlamasıdır.)
   ve `config.yml`'deki `base_url`'in worker adresinizle aynı olduğundan
   emin olun.
 
+## 10. Bağımlılık güncellemelerinin otomatikleştirilmesi ("kur ve unut")
+
+Astro, Tailwind gibi paketlerin güncellemesini elle takip etmemeniz için
+depoya üç dosya eklendi:
+
+- **`.github/dependabot.yml`** — npm paketlerini haftada bir, GitHub
+  Actions sürümlerini ayda bir kontrol eder.
+- **`.github/workflows/ci.yml`** — her pull request'i (Dependabot'unkiler
+  dahil) birleştirilmeden önce gerçekten derler ve tip kontrolünden
+  geçirir.
+- **`.github/workflows/dependabot-auto-merge.yml`** — yalnızca **kırıcı
+  olmayan** (patch/minor) güncellemeleri, derleme başarılıysa otomatik
+  onaylayıp birleştirir. **Major** (büyük) sürüm güncellemeleri asla
+  otomatik birleştirilmez; ayrı bir PR olarak açık kalır ve siz (veya
+  ileride Claude'dan yardım isteyerek) uygun gördüğünüzde ele alırsınız.
+
+Deploy iş akışı zaten "önce derle, yalnızca başarılıysa yayınla"
+şeklinde çalıştığından, bir güncelleme siteyi bozsa bile **canlı site asla
+bozuk hâliyle güncellenmez** — son çalışan sürüm yayında kalmaya devam
+eder.
+
+### Bir kerelik etkinleştirme adımları
+
+Bu sistemin gerçekten otomatik çalışabilmesi için GitHub deposu
+ayarlarında iki şeyi bir kez açmanız gerekiyor:
+
+1. **Settings → General → Pull Requests** bölümünde **"Allow auto-merge"**
+   kutucuğunu işaretleyin.
+2. **Settings → Branches** üzerinden `main` için bir koruma kuralı
+   ekleyin (**Add branch protection rule**), **"Require status checks to
+   pass before merging"** seçeneğini işaretleyip listeden
+   **`build-check`** kontrolünü zorunlu (required) olarak seçin.
+
+Bu ikinci adım kritik: onsuz GitHub, derlemenin bitmesini beklemeden
+birleştirme yapabilir. Bu ayarları yaptıktan sonra hiçbir şey yapmanıza
+gerek kalmaz — küçük güncellemeler kendiliğinden akacak, büyük olanlar
+ise size haber vermeden hiçbir şeyi değiştirmeyecektir.
+
 ---
 
 © 2026 Okurken — Ufuk Demir
