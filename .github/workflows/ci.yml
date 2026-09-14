@@ -1,0 +1,35 @@
+name: Derleme Kontrolü (PR)
+
+# Her pull request için siteyi derler ve tip kontrolünden geçirir. Bu,
+# otomatik bağımlılık birleştirmesinin (bkz. dependabot-auto-merge.yml)
+# güvenli olmasının ön şartıdır: bir güncelleme derlemeyi bozarsa, bu
+# kontrol başarısız olur ve PR asla otomatik birleştirilmez.
+
+on:
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  build-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Depoyu klonla
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Bağımlılıkları yükle
+        run: npm ci
+
+      - name: Tip kontrolü
+        run: npx astro check
+
+      - name: Siteyi derle
+        run: npm run build

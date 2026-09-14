@@ -1,0 +1,42 @@
+name: Dependabot Otomatik Birleştirme
+
+# Yalnızca Dependabot'un açtığı, KIRICI OLMAYAN (patch/minor) güncelleme
+# PR'larını otomatik onaylar ve birleştirir. Büyük (major) sürüm
+# güncellemeleri bu iş akışına hiç girmez — onlar için hiçbir otomatik
+# işlem yapılmaz, PR açık kalır ve elle incelenmeyi bekler.
+#
+# ÖNEMLİ — bu iş akışının gerçekten güvenli çalışabilmesi için deponuzda
+# bir kerelik şu ayarların yapılmış olması gerekir (bkz. README.md):
+#   1) Settings → General → "Allow auto-merge" işaretli olmalı.
+#   2) Settings → Branches → main için bir koruma kuralı eklenip
+#      "Derleme Kontrolü (PR) / build-check" zorunlu (required) kontrol
+#      olarak seçilmelidir. Bu olmadan, GitHub auto-merge derlemenin
+#      bitmesini BEKLEMEDEN birleştirme yapabilir.
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Dependabot meta verisini oku
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Kırıcı olmayan güncellemeyi onayla ve otomatik birleştirmeyi etkinleştir
+        if: |
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: |
+          gh pr review --approve "$PR_URL"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

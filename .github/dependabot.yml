@@ -1,0 +1,37 @@
+version: 2
+updates:
+  # --- npm bağımlılıkları (Astro, Tailwind, Chart.js, Fuse.js vb.) ---
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    groups:
+      # Kırıcı olmayan (semver'e göre garanti edilen) küçük/yama
+      # güncellemeleri tek bir PR'da toplanır. Bu PR, derleme başarılı
+      # olursa .github/workflows/dependabot-auto-merge.yml tarafından
+      # otomatik olarak birleştirilir — elle bir şey yapmanız gerekmez.
+      routine-updates:
+        update-types:
+          - "minor"
+          - "patch"
+    # Büyük (major) sürüm güncellemeleri bu gruplamanın dışında kalır;
+    # Dependabot onlar için ayrı, birleştirilmemiş bir PR açar ve siz
+    # (veya ileride Claude) uygun gördüğünüzde elle incelersiniz.
+
+  # --- GitHub Actions sürümleri (actions/checkout, setup-node vb.) ---
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      routine-updates:
+        update-types:
+          - "minor"
+          - "patch"
