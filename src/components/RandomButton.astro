@@ -24,11 +24,12 @@ const ICON_PATHS: Record<Props["kind"], string> = {
   // Tırnak işareti
   // Tırnak işareti — gerçek tipografik karakter kullanılır (elle çizilmiş bir
   // eğri yerine), böylece küçük boyutta da düzgün ve tanıdık görünür.
-  // Tırnak işareti — tek, kalın ve büyük bir açış tırnağı; diğer ikonlarla
-  // aynı görsel ağırlıkta durması için serif fontta kalın (bold) çizilir.
-  // dominant-baseline="central" ile hem yatayda hem dikeyde tam ortalanır.
+  // Tırnak işareti — font'a bağlı bir karakter yerine, diğer ikonlarla aynı
+  // teknikte (vektör path) çizilmiş, dolu (fill) çift tırnak şekli. Böylece
+  // tarayıcıdan tarayıcıya değişen metin hizalama sorunları yaşanmaz ve
+  // konum tam olarak öngörülebilir kalır.
   quote:
-    '<text x="12" y="12" text-anchor="middle" dominant-baseline="central" font-size="22" font-weight="700" font-family="Georgia, \'Times New Roman\', serif" fill="currentColor" stroke="none">\u201C</text>',
+    '<path d="M9.5 8c-1.8 0-3.2 1.5-3.2 3.3v4.7h4.4v-4.7H8.9c0-1 .8-2 1.9-2.2z" fill="currentColor" stroke="none"/><path d="M16.5 8c-1.8 0-3.2 1.5-3.2 3.3v4.7h4.4v-4.7h-1.8c0-1 .8-2 1.9-2.2z" fill="currentColor" stroke="none"/>',
   // Yıldız
   review: '<path d="m12 3 2.5 5.6 6.1.6-4.6 4.1 1.3 6-5.3-3.1-5.3 3.1 1.3-6-4.6-4.1 6.1-.6L12 3Z"/>',
   // Yer imi / not
