@@ -4,10 +4,18 @@ name: Derleme Kontrolü (PR)
 # otomatik bağımlılık birleştirmesinin (bkz. dependabot-auto-merge.yml)
 # güvenli olmasının ön şartıdır: bir güncelleme derlemeyi bozarsa, bu
 # kontrol başarısız olur ve PR asla otomatik birleştirilmez.
+#
+# main'e push'ta da çalışması bilinçli bir tercih: GitHub, bir kontrolü
+# "zorunlu" (required) olarak seçtirebilmeniz için o kontrolün main
+# üzerinde en az bir kez çalışmış olmasını ister. Bu tetikleyici
+# olmadan, Settings → Branches sayfasındaki listede hiç görünmez.
 
 on:
   pull_request:
     branches: ["main"]
+  push:
+    branches: ["main"]
+  workflow_dispatch:
 
 permissions:
   contents: read
