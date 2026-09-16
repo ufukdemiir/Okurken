@@ -26,11 +26,13 @@ const { title, description, ogType, structuredData } = Astro.props;
     <main class="flex-1">
       <slot />
     </main>
-    <div class="mx-auto max-w-3xl border-t border-rule px-5 py-8">
-      <p class="text-sm text-ink-soft">
-        Kitaplar, alıntılar, incelemeler, notları ve blog yazılarının tamamını tek bir zaman akışında görmek için{" "}
-        <a href={withBase("/arsiv/")} class="font-semibold text-leather hover:underline">arşive</a> göz atabilirsiniz.
-      </p>
+    <div class="border-t border-rule">
+      <div class="mx-auto max-w-6xl px-5 py-8">
+        <p class="text-xs text-ink-soft sm:text-sm">
+          Kitaplar, alıntılar, incelemeler, notları ve blog yazılarının tamamını tek bir zaman akışında görmek için{" "}
+          <a href={withBase("/arsiv/")} class="font-semibold text-leather hover:underline">arşive</a> göz atabilirsiniz.
+        </p>
+      </div>
     </div>
     <Footer />
     <SearchModal />

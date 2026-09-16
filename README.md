@@ -233,16 +233,22 @@ eder.
 ### Bir kerelik etkinleştirme adımları
 
 Bu sistemin gerçekten otomatik çalışabilmesi için GitHub deposu
-ayarlarında iki şeyi bir kez açmanız gerekiyor:
+ayarlarında birkaç şeyi bir kez yapmanız gerekiyor. **Sıra önemli:**
 
 1. **Settings → General → Pull Requests** bölümünde **"Allow auto-merge"**
    kutucuğunu işaretleyin.
-2. **Settings → Branches** üzerinden `main` için bir koruma kuralı
+2. `.github/workflows/ci.yml` dosyasını `main` branch'ine push'layın
+   (veya zaten push'ladıysanız bu adımı atlayın) ve **Actions**
+   sekmesinden "Derleme Kontrolü (PR)" çalışmasının bir kez tamamlandığını
+   (yeşil tik) doğrulayın. Bu adım şart: GitHub, bir kontrolü zorunlu
+   olarak seçtirebilmeniz için onu daha önce en az bir kez çalışmış
+   görmüş olmalı — aksi hâlde bir sonraki adımdaki listede hiç görünmez.
+3. **Settings → Branches** üzerinden `main` için bir koruma kuralı
    ekleyin (**Add branch protection rule**), **"Require status checks to
-   pass before merging"** seçeneğini işaretleyip listeden
-   **`build-check`** kontrolünü zorunlu (required) olarak seçin.
+   pass before merging"** seçeneğini işaretleyip arama kutusuna `build`
+   yazın ve çıkan **`build-check`** kontrolünü seçin.
 
-Bu ikinci adım kritik: onsuz GitHub, derlemenin bitmesini beklemeden
+Üçüncü adım kritik: onsuz GitHub, derlemenin bitmesini beklemeden
 birleştirme yapabilir. Bu ayarları yaptıktan sonra hiçbir şey yapmanıza
 gerek kalmaz — küçük güncellemeler kendiliğinden akacak, büyük olanlar
 ise size haber vermeden hiçbir şeyi değiştirmeyecektir.
