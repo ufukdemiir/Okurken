@@ -1,0 +1,15 @@
+---
+// Sayfa içeriğinin altında görünen, tam genişlikte üst çizgili, ortalanmış
+// kısa bilgi notları için ortak bileşen. Hem BaseLayout'taki genel arşiv
+// çağrısı hem de sayfaya özel notlar (ör. İstatistikler sayfasındaki veri
+// kapsamı açıklaması) bunu kullanır — böylece ikisi de birebir aynı
+// hizalama, boşluk ve tipografiyi paylaşır.
+---
+
+<div class="border-t border-rule">
+  <div class="mx-auto max-w-6xl px-5 py-6 text-center">
+    <p class="text-xs text-ink-soft sm:text-sm">
+      <slot />
+    </p>
+  </div>
+</div>

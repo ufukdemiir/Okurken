@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import InfoStrip from "../components/InfoStrip.astro";
 import { computeStats } from "../lib/stats";
 import { STATUS_LABELS_TR } from "../lib/books";
 import { getPublishedPosts } from "../lib/blog";
@@ -316,12 +317,12 @@ const chartPayload = {
         )}
       </div>
     </div>
-
-    <p class="mt-10 border-t border-rule pt-6 text-center text-xs text-ink-soft/70">
-      Bu sayfadaki veriler {stats.trackingStartYear} yılı ve sonrasına dair okuma verilerini
-      içermektedir. {stats.trackingStartYear}'dan önceki yıllara dair okuma verileri dahil değildir.
-    </p>
   </div>
+
+  <InfoStrip>
+    Bu sayfadaki istatistikler, {stats.trackingStartYear} yılı ve sonrasındaki okuma verilerimi
+    yansıtmaktadır.
+  </InfoStrip>
 </BaseLayout>
 
 <!-- Chart.js'e aktarılacak veriler: derleme anında hesaplanıp JSON olarak
