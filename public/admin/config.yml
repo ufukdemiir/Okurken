@@ -1,12 +1,8 @@
 backend:
   name: github
-  # ÖNEMLİ: "kullanici-adi/depo-adi" kısmını kendi GitHub kullanıcı adınız ve
-  # deponuzun adıyla değiştirin (ör. "ufukdemir/okurken").
   repo: ufukdemiir/Okurken
   branch: main
-  # Bu URL, README.md içindeki "Decap CMS için GitHub OAuth Kurulumu"
-  # bölümünde kendi Cloudflare Worker adresinizle değiştirilmelidir.
-  base_url: https://okurken-oauth.KULLANICI-ADI.workers.dev
+  base_url: https://sveltia-cms-auth.demiirufuk.workers.dev
   auth_endpoint: auth
 
 # Yayınlama: her kayıt doğrudan `branch`e commit edilir. Taslak/inceleme
