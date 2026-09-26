@@ -1,7 +1,5 @@
 backend:
   name: github
-  # ÖNEMLİ: "kullanici-adi/depo-adi" kısmını kendi GitHub kullanıcı adınız ve
-  # deponuzun adıyla değiştirin (ör. "ufukdemir/okurken").
   repo: ufukdemiir/Okurken
   branch: main
   # Bu URL, README.md içindeki "Decap CMS için GitHub OAuth Kurulumu"
