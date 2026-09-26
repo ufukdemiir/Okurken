@@ -29,6 +29,6 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@types/pdfmake": "^0.3.3",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   }
 }
