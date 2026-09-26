@@ -1,5 +1,5 @@
 ---
-import { getPublishedBooks } from "../lib/books";
+import { withBase } from "../lib/url";
 
 interface Props {
   variant?: "button" | "link";
@@ -8,52 +8,39 @@ interface Props {
 
 const { variant = "button", class: className = "" } = Astro.props;
 
-const books = await getPublishedBooks();
-const exportData = books.map((b) => ({
-  title: b.data.title,
-  author: b.data.author,
-  publisher: b.data.publisher || null,
-  pageCount: b.data.pageCount ?? null,
-  startDate: b.data.startDate ? b.data.startDate.toISOString().slice(0, 10) : null,
-  endDate: b.data.endDate ? b.data.endDate.toISOString().slice(0, 10) : null,
-  status: b.data.status,
-  rating: b.data.rating ?? null,
-  genres: b.data.genres,
-  notes: b.data.notes,
-  quotes: b.data.quotes,
-}));
+// Üç format da aynı derleme-zamanı (build-time) uç noktalarından gelir
+// (bkz. src/pages/arsiv/*.ts) ve hepsi sitedeki TÜM içeriği (kitaplar,
+// incelemeler, notlar, alıntılar, blog yazıları) tek dosyada barındırır —
+// bkz. src/lib/archiveExport.ts. `download` özniteliği, sunucu başlıkları
+// ne olursa olsun tarayıcıyı doğrudan indirmeye zorlar.
+const formats: { label: string; href: string; filename: string }[] = [
+  { label: "JSON", href: withBase("/arsiv/okurken-arsiv.json"), filename: "okurken-arsiv.json" },
+  { label: "CSV", href: withBase("/arsiv/okurken-arsiv.csv"), filename: "okurken-arsiv.csv" },
+  { label: "PDF", href: withBase("/arsiv/okurken-arsiv.pdf"), filename: "okurken-arsiv.pdf" },
+];
 
-const baseClass =
+const wrapClass =
   variant === "button"
-    ? "inline-flex items-center gap-2 rounded-full border border-rule px-4 py-2 text-sm text-ink-soft transition-colors hover:border-leather hover:text-leather"
-    : "inline-flex items-center gap-1 text-sm text-ink-soft transition-colors hover:text-leather";
+    ? "inline-flex flex-wrap items-center gap-x-2 gap-y-1 rounded-full border border-rule px-4 py-2 text-sm text-ink-soft transition-colors hover:border-leather"
+    : "inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft";
+
+const chipClass =
+  "inline-flex items-center rounded-md border border-rule bg-surface px-1.5 py-0.5 font-mono text-[0.7rem] font-semibold leading-none text-ink-soft no-underline transition-colors hover:border-leather hover:bg-paper hover:text-leather";
 ---
 
-<button type="button" data-export={JSON.stringify(exportData)} class={`${baseClass} ${className}`}>
-  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+<span class={`${wrapClass} ${className}`}>
+  <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 3v12m0 0-4-4m4 4 4-4"></path>
     <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path>
   </svg>
-  Arşivi JSON indir
-</button>
-
-<script>
-  // Birden fazla örnek olabileceği için tek bir olay temsilcisi kullanılır.
-  if (!(window as any).__okurkenExportBound) {
-    (window as any).__okurkenExportBound = true;
-    document.addEventListener("click", (event) => {
-      const button = (event.target as HTMLElement)?.closest<HTMLButtonElement>("[data-export]");
-      if (!button) return;
-      const data = button.getAttribute("data-export") ?? "[]";
-      const blob = new Blob([data], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "okurken-arsiv.json";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    });
-  }
-</script>
+  <span>Arşivi indir:</span>
+  <span class="inline-flex items-center gap-1">
+    {
+      formats.map((format) => (
+        <a href={format.href} download={format.filename} class={chipClass}>
+          {format.label}
+        </a>
+      ))
+    }
+  </span>
+</span>

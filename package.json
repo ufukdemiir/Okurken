@@ -22,10 +22,13 @@
     "astro": "^7.3.1",
     "chart.js": "^4.5.1",
     "fuse.js": "^7.5.0",
+    "marked": "^18.0.14",
+    "pdfmake": "^0.3.11",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@types/pdfmake": "^0.3.3",
     "typescript": "^6.0.3"
   }
 }
