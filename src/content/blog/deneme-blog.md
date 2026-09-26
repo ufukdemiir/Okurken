@@ -7,7 +7,7 @@ tags:
   - Serbest Fikirler
 draft: false
 ---
-![](/uploads/deneme-kitap-kapagi.jpg)
+![](../../public/uploads/deneme-kitap-kapagi.jpg)
 
 
 
