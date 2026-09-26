@@ -4,6 +4,7 @@ author: Deneme Yazar
 publisher: Deneme Yayınevi
 pageCount: 985
 startDate: 2026-09-26
+endDate: 2026-09-26
 status: completed
 rating: 4
 pagesRead: 123
