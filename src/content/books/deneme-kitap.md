@@ -4,7 +4,7 @@ author: Deneme Yazar
 publisher: Deneme Yayınevi
 pageCount: 985
 startDate: 2026-09-26
-status: reading
+status: completed
 rating: 4
 pagesRead: 123
 genres:
